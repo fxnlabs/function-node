@@ -17,7 +17,7 @@ import (
 )
 
 type NonceCache struct {
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	nonces  map[string]time.Time
 	ttl     time.Duration
 	cleanup time.Duration
@@ -48,8 +48,8 @@ func (c *NonceCache) startCleanup() {
 }
 
 func (c *NonceCache) IsUsed(nonce string) bool {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	_, used := c.nonces[nonce]
 	return used
 }
