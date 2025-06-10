@@ -41,7 +41,6 @@
 ### Authentication (internal/auth)
 - [x] Implement authentication for OpenAI endpoints to prevent unauthorized access and replay attacks.
 - [x] Implement actual challenge authentication in `AuthenticateChallenge`
-- [ ] Consider replacing the in-memory nonce cache with a distributed cache (e.g., Redis) for a multi-node setup.
 - [x] Renamed `IsNodeRegistered` to `IsProviderRegistered` (conceptually, to be implemented if needed, using ProviderRegistry).
 
 
@@ -61,8 +60,6 @@
 - [x] Make the RPC provider configurable in `config.yaml` and injectable into registries.
 - [x] Centralized `ethclient.Client` creation and injection into registry constructors.
 - [x] Removed global variables for registries; instances are created in `main` and passed as dependencies.
-- [ ] Implement actual smart contract fetching logic for ProviderRegistry in `internal/registry/provider_registry.go` (currently dummy).
-- [ ] Implement actual smart contract fetching logic for SchedulerRegistry in `internal/registry/scheduler_registry.go` (currently returns configured address, may need to fetch dynamic list).
-- [ ] Define and use actual ABI for ProviderRegistry if contract calls are needed.
+- [x] Implement actual smart contract fetching logic for ProviderRegistry in `internal/registry/provider_registry.go`.
+- [x] Define and use actual ABI for ProviderRegistry.
 - [ ] Define and use actual ABI for SchedulerRegistry if contract calls beyond simple address storage are needed.
-- [ ] Review if `AuthMiddleware` needs to use `ProviderRegistry` for any checks (e.g., `IsProviderRegistered`).
