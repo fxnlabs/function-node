@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/auth"
@@ -15,7 +14,6 @@ import (
 )
 
 const configDir = "config.yaml"
-const modelBackendDir = "model_backend.yaml"
 
 func main() {
 	cfg, err := config.LoadConfig(configDir)
@@ -28,7 +26,7 @@ func main() {
 	}
 	rootLogger := zapLogger.Named("node")
 
-	modelBackendConfig, err := config.LoadModelBackendConfig(modelBackendDir)
+	modelBackendConfig, err := config.LoadModelBackendConfig(cfg.ModelBackendPath)
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
@@ -41,7 +39,7 @@ func main() {
 	defer ethClient.Close() // Ensure client is closed when main exits
 
 	// Use for verifying signatures and preventing replay attacks.
-	nonceCache := auth.NewNonceCache(5*time.Minute, 1*time.Minute)
+	nonceCache := auth.NewNonceCache(cfg.NonceCache.TTL, cfg.NonceCache.CleanupInterval)
 
 	// Initialize registries
 	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, rootLogger)

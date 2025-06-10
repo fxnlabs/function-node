@@ -9,7 +9,7 @@ import (
 
 type Config struct {
 	Node struct {
-		KeystorePath string `yaml:"keystorePath"`
+		Keyfile string `yaml:"keyfile"`
 	} `yaml:"node"`
 	Logger struct {
 		Verbosity string `yaml:"verbosity"`
@@ -28,7 +28,12 @@ type Config struct {
 			PollInterval         time.Duration `yaml:"pollInterval"`
 		} `yaml:"provider"`
 	} `yaml:"registry"`
-	RpcProvider string `yaml:"rpcProvider"`
+	RpcProvider      string `yaml:"rpcProvider"`
+	ModelBackendPath string `yaml:"modelBackendPath"`
+	NonceCache       struct {
+		TTL             time.Duration `yaml:"ttl"`
+		CleanupInterval time.Duration `yaml:"cleanupInterval"`
+	} `yaml:"nonceCache"`
 }
 
 func LoadConfig(path string) (*Config, error) {

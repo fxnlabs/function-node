@@ -1,5 +1,5 @@
 node:
-  keystorePath: ""
+  keyfile: "nodekey"
 logger:
   verbosity: "info"
 registry:
@@ -13,3 +13,7 @@ registry:
     smartContractAddress: ""
     pollInterval: "1m"
 rpcProvider: ""
+modelBackendPath: "model_backend.yaml"
+nonceCache:
+  ttl: "5m"
+  cleanupInterval: "10m"
