@@ -26,17 +26,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log := zapLogger.Named("node")
+	rootLogger := zapLogger.Named("node")
 
 	modelBackendConfig, err := config.LoadModelBackendConfig(modelBackendDir)
 	if err != nil {
-		log.Fatal("failed to load model_backend config", zap.Error(err))
+		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
 
 	// Initialize Ethereum client
 	ethClient, err := ethclient.Dial(cfg.RpcProvider)
 	if err != nil {
-		log.Fatal("Failed to connect to Ethereum RPC provider", zap.String("provider", cfg.RpcProvider), zap.Error(err))
+		rootLogger.Fatal("Failed to connect to Ethereum RPC provider", zap.String("provider", cfg.RpcProvider), zap.Error(err))
 	}
 	defer ethClient.Close() // Ensure client is closed when main exits
 
@@ -44,38 +44,38 @@ func main() {
 	nonceCache := auth.NewNonceCache(5*time.Minute, 1*time.Minute)
 
 	// Initialize registries
-	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, log)
+	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, rootLogger)
 	if err != nil {
-		log.Fatal("failed to initialize gateway registry", zap.Error(err))
+		rootLogger.Fatal("failed to initialize gateway registry", zap.Error(err))
 	}
 
-	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, log)
+	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, rootLogger)
 	if err != nil {
-		log.Fatal("failed to initialize scheduler registry", zap.Error(err))
+		rootLogger.Fatal("failed to initialize scheduler registry", zap.Error(err))
 	}
 
-	providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, log)
+	providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, rootLogger)
 	if err != nil {
-		log.Fatal("failed to initialize provider registry", zap.Error(err))
+		rootLogger.Fatal("failed to initialize provider registry", zap.Error(err))
 	}
 	// Make providerRegistry available if needed by other parts, e.g., auth middleware
 	// For now, it's initialized but not explicitly used further in this snippet.
 	// If IsProviderRegistered is part of auth, it might use this providerRegistry.
 	_ = providerRegistry // Placeholder to use providerRegistry, remove if it's passed to a consumer
 
-	challengeHandler := challenge.ChallengeHandler(log)
+	challengeHandler := challenge.ChallengeHandler(rootLogger)
 	// Assuming AuthMiddleware might need providerRegistry if it performs provider registration checks.
 	// If not, schedulerRegistry might be the correct one for challenges.
 	// Based on existing code, schedulerRegistry is used for /challenge
-	http.Handle("/challenge", auth.AuthMiddleware(challengeHandler, log, nonceCache, schedulerRegistry))
+	http.Handle("/challenge", auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry))
 
-	oaiHandler := openai.NewOAIHandler(modelBackendConfig, log)
-	http.Handle("/v1/chat/completions", auth.AuthMiddleware(oaiHandler, log, nonceCache, gatewayRegistry))
-	http.Handle("/v1/completions", auth.AuthMiddleware(oaiHandler, log, nonceCache, gatewayRegistry))
-	http.Handle("/v1/embeddings", auth.AuthMiddleware(oaiHandler, log, nonceCache, gatewayRegistry))
+	oaiHandler := openai.NewOAIHandler(modelBackendConfig, rootLogger)
+	http.Handle("/v1/chat/completions", auth.AuthMiddleware(oaiHandler, rootLogger, nonceCache, gatewayRegistry))
+	http.Handle("/v1/completions", auth.AuthMiddleware(oaiHandler, rootLogger, nonceCache, gatewayRegistry))
+	http.Handle("/v1/embeddings", auth.AuthMiddleware(oaiHandler, rootLogger, nonceCache, gatewayRegistry))
 
-	log.Info("Starting server on :8080")
+	rootLogger.Info("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
-		log.Fatal("failed to start server", zap.Error(err))
+		rootLogger.Fatal("failed to start server", zap.Error(err))
 	}
 }
