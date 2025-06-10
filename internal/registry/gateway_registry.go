@@ -50,7 +50,7 @@ func NewGatewayRegistry(
 		client,
 		gatewayContractAddress,
 		parsedABI,
-		fetchGatewayRegistry, // Pass the function directly
+		fetchGatewayRegistry,
 		pollInterval,
 		specificLogger,
 	), nil
