@@ -2,20 +2,20 @@ package registry
 
 import (
 	"fmt"
-	// Added missing import
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/fxnlabs/function-node/internal/config" // Assuming your project structure
+	"github.com/fxnlabs/function-node/internal/config"
 	"go.uber.org/zap"
 )
 
 // NewSchedulerRegistry creates a new cached registry for schedulers.
 func NewSchedulerRegistry(
 	client *ethclient.Client,
-	cfg *config.Config, // Pass the full config
+	cfg *config.Config,
 	logger *zap.Logger,
-) (*CachedRegistry, error) { // Return error for consistency
+) (*CachedRegistry, error) {
 	// For scheduler registry, the ABI might not be complex or even needed if we're just storing addresses.
 	// However, to conform to CachedRegistry, we might pass a nil or minimal ABI.
 	// Or, if there's a contract call to verify schedulers, an ABI would be needed.
