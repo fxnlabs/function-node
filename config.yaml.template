@@ -1,0 +1,12 @@
+node:
+  keystorePath: ""
+logger:
+  verbosity: "info"
+registry:
+  gateway:
+    pollInterval: "1m"
+  scheduler:
+    pollInterval: "1m"
+  node:
+    pollInterval: "1m"
+rpcProvider: ""
