@@ -24,8 +24,7 @@ func NewSchedulerRegistry(
 
 	schedulerContractAddress := common.HexToAddress(cfg.Registry.Scheduler.SmartContractAddress)
 	pollInterval := cfg.Registry.Scheduler.PollInterval
-	registryName := "scheduler_registry"
-	specificLogger := logger.Named(registryName)
+	specificLogger := logger.Named("scheduler_registry")
 
 	// A dummy ABI if no actual contract calls are made by fetchSchedulerRegistry for now.
 	// If fetchSchedulerRegistry needs to call contract methods, provide the actual ABI.

@@ -50,8 +50,7 @@ func NewProviderRegistry(
 
 	providerContractAddress := common.HexToAddress(cfg.Registry.Provider.SmartContractAddress)
 	pollInterval := cfg.Registry.Provider.PollInterval
-	registryName := "provider_registry"
-	specificLogger := logger.Named(registryName)
+	specificLogger := logger.Named("provider_registry")
 
 	return NewCachedRegistry(
 		client,

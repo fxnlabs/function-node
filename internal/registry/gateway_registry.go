@@ -44,8 +44,7 @@ func NewGatewayRegistry(
 
 	gatewayContractAddress := common.HexToAddress(cfg.Registry.Gateway.SmartContractAddress)
 	pollInterval := cfg.Registry.Gateway.PollInterval
-	registryName := "gateway_registry"
-	specificLogger := logger.Named(registryName)
+	specificLogger := logger.Named("gateway_registry")
 
 	return NewCachedRegistry(
 		client,
