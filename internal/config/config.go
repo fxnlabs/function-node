@@ -16,14 +16,17 @@ type Config struct {
 	} `yaml:"logger"`
 	Registry struct {
 		Gateway struct {
-			PollInterval time.Duration `yaml:"pollInterval"`
+			SmartContractAddress string        `yaml:"smartContractAddress"`
+			PollInterval         time.Duration `yaml:"pollInterval"`
 		} `yaml:"gateway"`
 		Scheduler struct {
-			PollInterval time.Duration `yaml:"pollInterval"`
+			SmartContractAddress string        `yaml:"smartContractAddress"`
+			PollInterval         time.Duration `yaml:"pollInterval"`
 		} `yaml:"scheduler"`
-		Node struct {
-			PollInterval time.Duration `yaml:"pollInterval"`
-		} `yaml:"node"`
+		Provider struct {
+			SmartContractAddress string        `yaml:"smartContractAddress"`
+			PollInterval         time.Duration `yaml:"pollInterval"`
+		} `yaml:"provider"`
 	} `yaml:"registry"`
 	RpcProvider string `yaml:"rpcProvider"`
 }

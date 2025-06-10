@@ -2,12 +2,12 @@
 
 ## Summary
 
-The Function Node software is a P2P (Peer-to-Peer) system built for node 
-operators of Function Network. It acts as a proxy to LLM (Large Language 
+The Function Node software is a P2P (Peer-to-Peer) system built for provider 
+operators (formerly node operators) of Function Network. It acts as a proxy to LLM (Large Language 
 Model) inference endpoints and supports OpenAI-compatible endpoints.
 
 ### Key Components
-1. **Authentication**: Verify node registration, prevent spoofing, and 
+1. **Authentication**: Verify provider registration, prevent spoofing, and 
 authenticate requests from the Scheduler entity.
 2. **OpenAI Endpoints**: Configure specific models and point them to 
 different URLs via a YAML configuration file.
@@ -19,7 +19,7 @@ responses in memory, and use RPC calls for better performance improvement.
 logging using Zap logger.
 
 **Key Goals:**
-1. Ensure node operators can monitor their operation and receive alerts 
+1. Ensure provider operators can monitor their operation and receive alerts 
 when issues arise.
 2. Prevent spoofing and ensure authenticity of requests from the Scheduler 
 entity.
@@ -28,15 +28,15 @@ for smart contract interactions.
 
 
 ## Config (internal/config)
-* Implement a general config yaml file that is read by our code base. This config file will let us configure where the node keys are stored, verbosity.
+* Implement a general config yaml file that is read by our code base. This config file will let us configure where the provider keys are stored, verbosity, and RPC provider details. It also includes configuration for polling intervals and smart contract addresses for various registries (Gateway, Scheduler, Provider).
 
-* Implement a backend config yaml which allows node operators to provide model names and endpoints where the model will be proxied to (i.e another http endpoint) when the OpenAI endpoints are called. More information can be found in the OpenAI endpoint section
+* Implement a backend config yaml which allows provider operators to provide model names and endpoints where the model will be proxied to (i.e another http endpoint) when the OpenAI endpoints are called. More information can be found in the OpenAI endpoint section
 
 ## Authentication (internal/auth)
 
-* Implement a node registry check to ensure the requesting node is
+* Implement a provider registry check (using `ProviderRegistry`) to ensure the requesting provider is
 registered with Function Network.
-    + If a node is not registered, keep polling until it is registered.
+    + If a provider is not registered, the system should handle this appropriately (e.g., deny access or trigger alerts, actual polling behavior TBD based on `ProviderRegistry` implementation).
 * Implement authentication for challenges endpoint to prevent spoofing by verifying a signature against a message and public key.
 * Implement authentication for OpenAI endpoints:
     + Verify requests come from an authorized gateway by checking for a valid signature in the `X-Signature` header.
@@ -46,7 +46,7 @@ registered with Function Network.
 
 ## OpenAI Endpoints (internal/oepnai)
 
-* Define a YAML configuration file (`backend.yaml`) that allows node 
+* Define a YAML configuration file (`backend.yaml`) that allows provider 
 operators to configure specific models and point them to different URLs 
 (backends).
 * Include the following endpoints:
@@ -61,19 +61,24 @@ operators to configure specific models and point them to different URLs
 * A central `ChallengeHandler` receives all challenge requests and delegates them to the appropriate challenger based on the challenge type.
 * Each challenge is implemented in its own file in the `internal/challenge/challengers` directory.
 * Defined challenges:
-	1. **Poll GPU Stats**: Polls metadata of GPUs provided by node operators.
-	2. **Matrix Multiplication**: Performs a matrix multiplication challenge to ensure the authenticity of node operator GPU responses and speed.
+	1. **Poll GPU Stats**: Polls metadata of GPUs provided by provider operators.
+	2. **Matrix Multiplication**: Performs a matrix multiplication challenge to ensure the authenticity of provider operator GPU responses and speed.
 	3. **Poll Endpoint Reachable**: Basic poll checks to ensure endpoints are reachable.
 
-## Smart Contracts (internal/contracts)
+## Smart Contracts (internal/registry, internal/contracts)
 
-* Implement RPC calls to smart contracts using VIEM to grab related registries.
-* Cache responses in memory and poll async for updated regsitries periodically. The registry poll checks can be configured via our general config library. Use a RPC library to cache if VIEM doesnt support by default.
-* Use the provided ABI (Application Binary Interface) for smart contract interactions.
+* Implement RPC calls to smart contracts using `go-ethereum/ethclient` to grab related registries (Gateway, Scheduler, Provider).
+* A generic `CachedRegistry` (`internal/registry/registry.go`) handles caching responses in memory and polling asynchronously for updated registries.
+    + Each specific registry (e.g., `GatewayRegistry`, `ProviderRegistry`) implements a `FetchFunc` to retrieve its data.
+    + Polling intervals and smart contract addresses are configurable via `config.yaml`.
+    + An `ethclient.Client` is instantiated once in `main` and injected into registry constructors.
+* Use provided ABIs (Application Binary Interface) for smart contract interactions (e.g., `GatewayRegistry.json`).
+* `GatewayRegistry` fetches active gateways using `getActiveGatewaysLive`.
+* `ProviderRegistry` and `SchedulerRegistry` currently have dummy fetch implementations; these need to be updated to interact with their respective smart contracts.
 
 ## Observability and Logging (internal/metrics, internal/logger)
 
-* Add promethesus observability features to ensure node operators can monitor their operation:
+* Add promethesus observability features to ensure provider operators can monitor their operation:
 	+ Scheduler checks
 	+ Endpoint responses and error codes
 * Implement logging using the Zap logger, with verbosity configurable via 

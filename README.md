@@ -7,7 +7,7 @@
 - [x] Implement a backend config yaml which allows node operators to provide model names and endpoints where the model will be proxied to (i.e another http endpoint) when the OpenAI endpoints are called.
 
 ### Authentication (internal/auth)
-- [x] Implement a node registry check to ensure the requesting node is registered with Function Network.
+- [x] Implement a provider registry check to ensure the requesting provider is registered with Function Network.
 - [x] Implement authentication for challenges endpoint to prevent spoofing.
 
 ### OpenAI Endpoints (internal/openai)
@@ -42,7 +42,7 @@
 - [x] Implement authentication for OpenAI endpoints to prevent unauthorized access and replay attacks.
 - [x] Implement actual challenge authentication in `AuthenticateChallenge`
 - [ ] Consider replacing the in-memory nonce cache with a distributed cache (e.g., Redis) for a multi-node setup.
-- [x] Removed `IsNodeRegistered` in favor of `registry.IsNodeRegistered`.
+- [x] Renamed `IsNodeRegistered` to `IsProviderRegistered` (conceptually, to be implemented if needed, using ProviderRegistry).
 
 
 ### Challenges Endpoint (internal/challenge)
@@ -56,8 +56,13 @@
 - [x] Create the concept of a `CachedRegistry` that calls an RPC provider/smart contracts for updating its caches. This should be a generic implementation to support different registries, with each registry having a configurable update interval.
 	- [x] Gateway Registry
 	- [x] Scheduler Registry
-	- [x] Node Registry
-- [ ] Define registry fields in `Registry` struct
-- [ ] Implement actual registry fetching in `GetRegistry` using RPC calls with an ABI.
-- [ ] Implement registry caching in `CacheRegistries`
-- [ ] Make the RPC provider configurable in `config.yaml`.
+	- [x] Provider Registry (formerly Node Registry)
+- [x] Implement registry fetching for Gateways (using `getActiveGatewaysLive`).
+- [x] Make the RPC provider configurable in `config.yaml` and injectable into registries.
+- [x] Centralized `ethclient.Client` creation and injection into registry constructors.
+- [x] Removed global variables for registries; instances are created in `main` and passed as dependencies.
+- [ ] Implement actual smart contract fetching logic for ProviderRegistry in `internal/registry/provider_registry.go` (currently dummy).
+- [ ] Implement actual smart contract fetching logic for SchedulerRegistry in `internal/registry/scheduler_registry.go` (currently returns configured address, may need to fetch dynamic list).
+- [ ] Define and use actual ABI for ProviderRegistry if contract calls are needed.
+- [ ] Define and use actual ABI for SchedulerRegistry if contract calls beyond simple address storage are needed.
+- [ ] Review if `AuthMiddleware` needs to use `ProviderRegistry` for any checks (e.g., `IsProviderRegistered`).

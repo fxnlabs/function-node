@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/auth"
 	"github.com/fxnlabs/function-node/internal/challenge"
 	"github.com/fxnlabs/function-node/internal/config"
@@ -32,13 +33,40 @@ func main() {
 		log.Fatal("failed to load backend config", zap.Error(err))
 	}
 
+	// Initialize Ethereum client
+	ethClient, err := ethclient.Dial(cfg.RpcProvider)
+	if err != nil {
+		log.Fatal("Failed to connect to Ethereum RPC provider", zap.String("provider", cfg.RpcProvider), zap.Error(err))
+	}
+	defer ethClient.Close() // Ensure client is closed when main exits
+
 	// Use for verifying signatures and preventing replay attacks.
 	nonceCache := auth.NewNonceCache(5*time.Minute, 1*time.Minute)
 
-	gatewayRegistry := registry.NewGatewayRegistry(cfg.Registry.Gateway.PollInterval)
-	schedulerRegistry := registry.NewSchedulerRegistry(cfg.Registry.Scheduler.PollInterval)
+	// Initialize registries
+	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, log)
+	if err != nil {
+		log.Fatal("failed to initialize gateway registry", zap.Error(err))
+	}
+
+	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, log)
+	if err != nil {
+		log.Fatal("failed to initialize scheduler registry", zap.Error(err))
+	}
+
+	providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, log)
+	if err != nil {
+		log.Fatal("failed to initialize provider registry", zap.Error(err))
+	}
+	// Make providerRegistry available if needed by other parts, e.g., auth middleware
+	// For now, it's initialized but not explicitly used further in this snippet.
+	// If IsProviderRegistered is part of auth, it might use this providerRegistry.
+	_ = providerRegistry // Placeholder to use providerRegistry, remove if it's passed to a consumer
 
 	challengeHandler := challenge.ChallengeHandler(log)
+	// Assuming AuthMiddleware might need providerRegistry if it performs provider registration checks.
+	// If not, schedulerRegistry might be the correct one for challenges.
+	// Based on existing code, schedulerRegistry is used for /challenge
 	http.Handle("/challenge", auth.AuthMiddleware(challengeHandler, log, nonceCache, schedulerRegistry))
 
 	oaiHandler := openai.NewOAIHandler(backendConfig, log)

@@ -4,9 +4,12 @@ logger:
   verbosity: "info"
 registry:
   gateway:
+    smartContractAddress: ""
     pollInterval: "1m"
   scheduler:
+    smartContractAddress: ""
     pollInterval: "1m"
-  node:
+  provider:
+    smartContractAddress: ""
     pollInterval: "1m"
 rpcProvider: ""
