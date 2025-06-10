@@ -39,8 +39,8 @@ func main() {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "accounts",
-				Usage: "Manage accounts",
+				Name:  "account",
+				Usage: "Manage account",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "new",
@@ -64,6 +64,27 @@ func main() {
 							}
 
 							log.Info("New account created", zap.String("address", crypto.PubkeyToAddress(*publicKeyECDSA).Hex()))
+							return nil
+						},
+					},
+					{
+						Name:  "get",
+						Usage: "Get the account address",
+						Action: func(c *cli.Context) error {
+							privateKeyBytes, err := os.ReadFile("nodekey")
+							if err != nil {
+								return err
+							}
+							privateKey, err := crypto.HexToECDSA(string(privateKeyBytes))
+							if err != nil {
+								return err
+							}
+							publicKey := privateKey.Public()
+							publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+							if !ok {
+								log.Fatal("error casting public key to ECDSA")
+							}
+							log.Info("Account address", zap.String("address", crypto.PubkeyToAddress(*publicKeyECDSA).Hex()))
 							return nil
 						},
 					},

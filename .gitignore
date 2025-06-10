@@ -41,6 +41,7 @@ backend.yaml
 # build files
 /node
 /cli
+/main
 
 # Keystore
 /keystore
