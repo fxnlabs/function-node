@@ -4,14 +4,14 @@
 
 ### Config (internal/config)
 - [x] Implement a general config yaml file that is read by our code base. This config file will let us configure where the node keys are stored, verbosity.
-- [x] Implement a backend config yaml which allows node operators to provide model names and endpoints where the model will be proxied to (i.e another http endpoint) when the OpenAI endpoints are called.
+- [x] Implement a model_backend config yaml which allows node operators to provide model names and endpoints where the model will be proxied to (i.e another http endpoint) when the OpenAI endpoints are called.
 
 ### Authentication (internal/auth)
 - [x] Implement a provider registry check to ensure the requesting provider is registered with Function Network.
 - [x] Implement authentication for challenges endpoint to prevent spoofing.
 
 ### OpenAI Endpoints (internal/openai)
-- [x] Define a YAML configuration file (`backend.yaml`) that allows node operators to configure specific models and point them to different URLs (backends).
+- [x] Define a YAML configuration file (`model_backend.yaml`) that allows node operators to configure specific models and point them to different URLs (model backends).
 - [x] Implement proxy for chat completion, completion, and embedding endpoints.
 - [x] Expose OpenAI endpoints through the node server.
 

@@ -30,7 +30,7 @@ for smart contract interactions.
 ## Config (internal/config)
 * Implement a general config yaml file that is read by our code base. This config file will let us configure where the provider keys are stored, verbosity, and RPC provider details. It also includes configuration for polling intervals and smart contract addresses for various registries (Gateway, Scheduler, Provider).
 
-* Implement a backend config yaml which allows provider operators to provide model names and endpoints where the model will be proxied to (i.e another http endpoint) when the OpenAI endpoints are called. More information can be found in the OpenAI endpoint section
+* Implement a model_backend config yaml which allows provider operators to provide model names and endpoints where the model will be proxied to (i.e another http endpoint) when the OpenAI endpoints are called. More information can be found in the OpenAI endpoint section
 
 ## Authentication (internal/auth)
 
@@ -44,11 +44,11 @@ registered with Function Network.
     + This approach protects against unauthorized access and replay attacks.
     + A nonce cache is used to prevent replay attacks within the valid timestamp window.
 
-## OpenAI Endpoints (internal/oepnai)
+## OpenAI Endpoints (internal/openai)
 
-* Define a YAML configuration file (`backend.yaml`) that allows provider 
+* Define a YAML configuration file (`model_backend.yaml`) that allows provider 
 operators to configure specific models and point them to different URLs 
-(backends).
+(model backends).
 * Include the following endpoints:
 	1. Chat completion (streaming and non-streaming)
 	2. Completion

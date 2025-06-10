@@ -36,7 +36,7 @@ Thumbs.db
 
 # Config files
 config.yaml
-backend.yaml
+model_backend.yaml
 
 # build files
 /node

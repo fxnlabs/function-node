@@ -11,7 +11,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type BackendConfig struct {
+type ModelBackendConfig struct {
 	Models map[string]string `yaml:"models"`
 }
 
@@ -19,13 +19,13 @@ type ModelExtractor struct {
 	Model string `json:"model"`
 }
 
-func LoadBackendConfig(path string) (*BackendConfig, error) {
+func LoadModelBackendConfig(path string) (*ModelBackendConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var config BackendConfig
+	var config ModelBackendConfig
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func LoadBackendConfig(path string) (*BackendConfig, error) {
 	return &config, nil
 }
 
-func (c *BackendConfig) GetBackendURL(r *http.Request, log *zap.Logger) string {
+func (c *ModelBackendConfig) GetModelBackendURL(r *http.Request, log *zap.Logger) string {
 	if r.Body == nil {
 		log.Warn("request body is nil")
 		return ""
@@ -53,10 +53,10 @@ func (c *BackendConfig) GetBackendURL(r *http.Request, log *zap.Logger) string {
 		return ""
 	}
 
-	backendURL, ok := c.Models[modelExtractor.Model]
+	modelBackendURL, ok := c.Models[modelExtractor.Model]
 	if !ok {
-		log.Warn("model not found in backend config", zap.String("model", modelExtractor.Model))
+		log.Warn("model not found in model_backend config", zap.String("model", modelExtractor.Model))
 		return ""
 	}
-	return backendURL
+	return modelBackendURL
 }

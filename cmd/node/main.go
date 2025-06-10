@@ -15,7 +15,7 @@ import (
 )
 
 const configDir = "config.yaml"
-const modelBackendDir = "backend.yaml"
+const modelBackendDir = "model_backend.yaml"
 
 func main() {
 	cfg, err := config.LoadConfig(configDir)
@@ -28,9 +28,9 @@ func main() {
 	}
 	log := zapLogger.Named("node")
 
-	backendConfig, err := config.LoadBackendConfig(modelBackendDir)
+	modelBackendConfig, err := config.LoadModelBackendConfig(modelBackendDir)
 	if err != nil {
-		log.Fatal("failed to load backend config", zap.Error(err))
+		log.Fatal("failed to load model_backend config", zap.Error(err))
 	}
 
 	// Initialize Ethereum client
@@ -69,7 +69,7 @@ func main() {
 	// Based on existing code, schedulerRegistry is used for /challenge
 	http.Handle("/challenge", auth.AuthMiddleware(challengeHandler, log, nonceCache, schedulerRegistry))
 
-	oaiHandler := openai.NewOAIHandler(backendConfig, log)
+	oaiHandler := openai.NewOAIHandler(modelBackendConfig, log)
 	http.Handle("/v1/chat/completions", auth.AuthMiddleware(oaiHandler, log, nonceCache, gatewayRegistry))
 	http.Handle("/v1/completions", auth.AuthMiddleware(oaiHandler, log, nonceCache, gatewayRegistry))
 	http.Handle("/v1/embeddings", auth.AuthMiddleware(oaiHandler, log, nonceCache, gatewayRegistry))
