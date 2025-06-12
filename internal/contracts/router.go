@@ -40,11 +40,11 @@ func NewRouter(client *ethclient.Client, contractAddress common.Address, logger 
 	}, nil
 }
 
-func (r *Router) getAddress(name string) (common.Address, error) {
-	callData, err := r.contractABI.Pack("get", name)
+func (r *Router) getAddress(methodName string) (common.Address, error) {
+	callData, err := r.contractABI.Pack(methodName)
 	if err != nil {
-		r.logger.Error("Failed to pack data for get", zap.String("name", name), zap.Error(err))
-		return common.Address{}, fmt.Errorf("failed to pack data for get: %w", err)
+		r.logger.Error("Failed to pack data for get", zap.String("name", methodName), zap.Error(err))
+		return common.Address{}, fmt.Errorf("failed to pack data for %s: %w", methodName, err)
 	}
 
 	msg := ethereum.CallMsg{
@@ -53,28 +53,24 @@ func (r *Router) getAddress(name string) (common.Address, error) {
 	}
 	result, err := r.client.CallContract(context.Background(), msg, nil)
 	if err != nil {
-		r.logger.Error("Failed to call get", zap.String("name", name), zap.String("contractAddress", r.contractAddress.Hex()), zap.Error(err))
-		return common.Address{}, fmt.Errorf("failed to call get: %w", err)
+		r.logger.Error("Failed to call get", zap.String("name", methodName), zap.String("contractAddress", r.contractAddress.Hex()), zap.Error(err))
+		return common.Address{}, fmt.Errorf("failed to call %s: %w", methodName, err)
 	}
 
 	var addr common.Address
-	err = r.contractABI.UnpackIntoInterface(&addr, "get", result)
+	err = r.contractABI.UnpackIntoInterface(&addr, methodName, result)
 	if err != nil {
-		r.logger.Error("Failed to unpack get result", zap.String("name", name), zap.Error(err))
-		return common.Address{}, fmt.Errorf("failed to unpack get result: %w", err)
+		r.logger.Error("Failed to unpack get result", zap.String("name", methodName), zap.Error(err))
+		return common.Address{}, fmt.Errorf("failed to unpack %s result: %w", methodName, err)
 	}
 
 	return addr, nil
 }
 
 func (r *Router) GetGatewayRegistryAddress() (common.Address, error) {
-	return r.getAddress("GatewayRegistry")
+	return r.getAddress("gatewayRegistry")
 }
 
 func (r *Router) GetProviderRegistryAddress() (common.Address, error) {
-	return r.getAddress("ProviderRegistry")
-}
-
-func (r *Router) GetSchedulerRegistryAddress() (common.Address, error) {
-	return r.getAddress("SchedulerRegistry")
+	return r.getAddress("providerRegistry")
 }

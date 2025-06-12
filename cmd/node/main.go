@@ -56,7 +56,7 @@ func main() {
 		rootLogger.Fatal("failed to initialize gateway registry", zap.Error(err))
 	}
 
-	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, rootLogger, router)
+	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, rootLogger)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize scheduler registry", zap.Error(err))
 	}

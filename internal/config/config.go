@@ -20,7 +20,8 @@ type Config struct {
 			PollInterval time.Duration `yaml:"pollInterval"`
 		} `yaml:"gateway"`
 		Scheduler struct {
-			PollInterval time.Duration `yaml:"pollInterval"`
+			SmartContractAddress string        `yaml:"smartContractAddress"`
+			PollInterval         time.Duration `yaml:"pollInterval"`
 		} `yaml:"scheduler"`
 		Provider struct {
 			PollInterval time.Duration `yaml:"pollInterval"`

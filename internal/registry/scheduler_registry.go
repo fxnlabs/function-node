@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/config"
-	"github.com/fxnlabs/function-node/internal/contracts"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +15,6 @@ func NewSchedulerRegistry(
 	client *ethclient.Client,
 	cfg *config.Config,
 	logger *zap.Logger,
-	router *contracts.Router,
 ) (*CachedRegistry, error) {
 	// For scheduler registry, the ABI might not be complex or even needed if we're just storing addresses.
 	// However, to conform to CachedRegistry, we might pass a nil or minimal ABI.
@@ -24,10 +22,7 @@ func NewSchedulerRegistry(
 	// For now, assuming a simple case where the "registry" is just the configured address.
 	// If actual contract interaction is needed, an ABI and a proper fetch function would be required.
 
-	schedulerContractAddress, err := router.GetSchedulerRegistryAddress()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get scheduler registry address: %w", err)
-	}
+	schedulerContractAddress := common.HexToAddress(cfg.Registry.Scheduler.SmartContractAddress)
 	pollInterval := cfg.Registry.Scheduler.PollInterval
 	specificLogger := logger.Named("scheduler_registry")
 
