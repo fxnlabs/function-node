@@ -63,3 +63,58 @@
 - [x] Implement actual smart contract fetching logic for ProviderRegistry in `internal/registry/provider_registry.go`.
 - [x] Define and use actual ABI for ProviderRegistry.
 - [ ] Define and use actual ABI for SchedulerRegistry if contract calls beyond simple address storage are needed.
+- [ ] The scheduler registry is currently not implemented on purpose. Because right now it is actually an EOA that is hardcoded, can you add this into our README / implementation.md that this is on purpose as there will only be one scheduler right now
+
+## Example API Calls
+
+To simplify testing the API, you can use the `send_request.sh` script. This script automatically generates the required signature and sends the request.
+
+**Note:** The OpenAI endpoints can only be called by registered gateways, and the `/challenge` endpoint can only be called by the registered scheduler.
+
+### Authentication Details
+
+All API requests must include the following headers for authentication:
+
+- `X-Public-Key`: Your hex-encoded public key.
+- `X-Timestamp`: A Unix timestamp of when the request was made.
+- `X-Nonce`: A unique, randomly generated string for each request to prevent replay attacks.
+- `X-Signature`: A signature of the request payload.
+
+The signature is created by signing the following string with your private key:
+
+```
+sha256(request_body) + "." + timestamp + "." + nonce
+```
+
+### Using the `send_request.sh` Script
+This script is a helper to help SHA256 and send a request to your node for testing purposes.
+
+1.  **Set your private key:**
+
+    Export your hex-encoded private key as an environment variable.
+
+    ```bash
+    export PRIVATE_KEY=your_private_key_here
+    ```
+
+2.  **Make the script executable:**
+
+    ```bash
+    chmod +x ./scripts/send_request.sh
+    ```
+
+3.  **Run the script:**
+
+    The script takes two arguments: the endpoint and the request body.
+
+    **Chat Completions Example:**
+
+    ```bash
+    ./scripts/send_request.sh "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}]}'
+    ```
+
+    **Challenge Example:**
+
+    ```bash
+    ./scripts/send_request.sh "/challenge" '{"challenge_type": "matrix_multiplication"}'
+    ```

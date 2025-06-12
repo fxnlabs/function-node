@@ -75,6 +75,7 @@ operators to configure specific models and point them to different URLs
 * Use provided ABIs (Application Binary Interface) for smart contract interactions (e.g., `GatewayRegistry.json`).
 * `GatewayRegistry` fetches active gateways using `getActiveGatewaysLive`.
 * `ProviderRegistry` and `SchedulerRegistry` currently have dummy fetch implementations; these need to be updated to interact with their respective smart contracts.
+* The scheduler registry is currently not implemented on purpose. Because right now it is actually an EOA that is hardcoded, can you add this into our README / implementation.md that this is on purpose as there will only be one scheduler right now
 
 ## Observability and Logging (internal/metrics, internal/logger)
 
