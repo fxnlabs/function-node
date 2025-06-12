@@ -11,6 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/config"
+	"github.com/fxnlabs/function-node/internal/contracts"
 	"go.uber.org/zap"
 )
 
@@ -24,11 +25,11 @@ type Gateway struct {
 }
 
 // NewGatewayRegistry creates a new cached registry for gateways.
-// It now accepts an ethclient.Client, the application config, and a logger.
 func NewGatewayRegistry(
 	client *ethclient.Client,
 	cfg *config.Config,
 	logger *zap.Logger,
+	router *contracts.Router,
 ) (*CachedRegistry, error) {
 	// Load ABI content from file
 	abiBytes, err := os.ReadFile("fixtures/abi/GatewayRegistry.json")
@@ -42,7 +43,10 @@ func NewGatewayRegistry(
 		return nil, fmt.Errorf("failed to parse GatewayRegistry ABI: %w", err)
 	}
 
-	gatewayContractAddress := common.HexToAddress(cfg.Registry.Gateway.SmartContractAddress)
+	gatewayContractAddress, err := router.GetGatewayRegistryAddress()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get gateway registry address: %w", err)
+	}
 	pollInterval := cfg.Registry.Gateway.PollInterval
 	specificLogger := logger.Named("gateway_registry")
 

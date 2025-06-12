@@ -3,10 +3,12 @@ package main
 import (
 	"net/http"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/auth"
 	"github.com/fxnlabs/function-node/internal/challenge"
 	"github.com/fxnlabs/function-node/internal/config"
+	"github.com/fxnlabs/function-node/internal/contracts"
 	"github.com/fxnlabs/function-node/internal/logger"
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
@@ -41,18 +43,25 @@ func main() {
 	// Use for verifying signatures and preventing replay attacks.
 	nonceCache := auth.NewNonceCache(cfg.NonceCache.TTL, cfg.NonceCache.CleanupInterval)
 
+	// Initialize router
+	routerAddress := common.HexToAddress(cfg.Registry.RouterSmartContractAddress)
+	router, err := contracts.NewRouter(ethClient, routerAddress, rootLogger)
+	if err != nil {
+		rootLogger.Fatal("failed to initialize router", zap.Error(err))
+	}
+
 	// Initialize registries
-	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, rootLogger)
+	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, rootLogger, router)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize gateway registry", zap.Error(err))
 	}
 
-	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, rootLogger)
+	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, rootLogger, router)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize scheduler registry", zap.Error(err))
 	}
 
-	providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, rootLogger)
+	providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, rootLogger, router)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize provider registry", zap.Error(err))
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/config"
+	"github.com/fxnlabs/function-node/internal/contracts"
 	"go.uber.org/zap"
 )
 
@@ -30,6 +31,7 @@ func NewProviderRegistry(
 	client *ethclient.Client,
 	cfg *config.Config,
 	logger *zap.Logger,
+	router *contracts.Router,
 ) (*CachedRegistry, error) {
 	var parsedABI abi.ABI
 	var err error
@@ -48,7 +50,10 @@ func NewProviderRegistry(
 		return nil, fmt.Errorf("failed to parse ProviderRegistry ABI: %w", err)
 	}
 
-	providerContractAddress := common.HexToAddress(cfg.Registry.Provider.SmartContractAddress)
+	providerContractAddress, err := router.GetProviderRegistryAddress()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get provider registry address: %w", err)
+	}
 	pollInterval := cfg.Registry.Provider.PollInterval
 	specificLogger := logger.Named("provider_registry")
 

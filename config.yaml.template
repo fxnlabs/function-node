@@ -3,14 +3,12 @@ node:
 logger:
   verbosity: "info"
 registry:
+  routerSmartContractAddress: ""
   gateway:
-    smartContractAddress: ""
     pollInterval: "1m"
   scheduler:
-    smartContractAddress: ""
     pollInterval: "1m"
   provider:
-    smartContractAddress: ""
     pollInterval: "1m"
 rpcProvider: ""
 modelBackendPath: "model_backend.yaml"

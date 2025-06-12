@@ -15,17 +15,15 @@ type Config struct {
 		Verbosity string `yaml:"verbosity"`
 	} `yaml:"logger"`
 	Registry struct {
-		Gateway struct {
-			SmartContractAddress string        `yaml:"smartContractAddress"`
-			PollInterval         time.Duration `yaml:"pollInterval"`
+		RouterSmartContractAddress string `yaml:"routerSmartContractAddress"`
+		Gateway                    struct {
+			PollInterval time.Duration `yaml:"pollInterval"`
 		} `yaml:"gateway"`
 		Scheduler struct {
-			SmartContractAddress string        `yaml:"smartContractAddress"`
-			PollInterval         time.Duration `yaml:"pollInterval"`
+			PollInterval time.Duration `yaml:"pollInterval"`
 		} `yaml:"scheduler"`
 		Provider struct {
-			SmartContractAddress string        `yaml:"smartContractAddress"`
-			PollInterval         time.Duration `yaml:"pollInterval"`
+			PollInterval time.Duration `yaml:"pollInterval"`
 		} `yaml:"provider"`
 	} `yaml:"registry"`
 	RpcProvider      string `yaml:"rpcProvider"`
