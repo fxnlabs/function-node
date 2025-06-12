@@ -6,12 +6,10 @@ registry:
   routerSmartContractAddress: ""
   gateway:
     pollInterval: "1m"
-  scheduler:
-    smartContractAddress: ""
-    pollInterval: "1m"
   provider:
     pollInterval: "1m"
 rpcProvider: "https://devnet-rpc.function.network"
+schedulerAddress: ""
 modelBackendPath: "model_backend.yaml"
 nonceCache:
   ttl: "5m"

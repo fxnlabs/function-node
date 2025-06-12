@@ -63,7 +63,7 @@
 - [x] Implement actual smart contract fetching logic for ProviderRegistry in `internal/registry/provider_registry.go`.
 - [x] Define and use actual ABI for ProviderRegistry.
 - [ ] Define and use actual ABI for SchedulerRegistry if contract calls beyond simple address storage are needed.
-- [ ] The scheduler registry is currently not implemented on purpose. Because right now it is actually an EOA that is hardcoded, can you add this into our README / implementation.md that this is on purpose as there will only be one scheduler right now
+- [ ] Define and use actual ABI for SchedulerRegistry if contract calls beyond simple address storage are needed.
 
 ## Example API Calls
 

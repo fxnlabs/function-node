@@ -22,8 +22,7 @@ func NewSchedulerRegistry(
 	// For now, assuming a simple case where the "registry" is just the configured address.
 	// If actual contract interaction is needed, an ABI and a proper fetch function would be required.
 
-	schedulerContractAddress := common.HexToAddress(cfg.Registry.Scheduler.SmartContractAddress)
-	pollInterval := cfg.Registry.Scheduler.PollInterval
+	schedulerContractAddress := common.HexToAddress(cfg.SchedulerAddress)
 	specificLogger := logger.Named("scheduler_registry")
 
 	// A dummy ABI if no actual contract calls are made by fetchSchedulerRegistry for now.
@@ -35,7 +34,7 @@ func NewSchedulerRegistry(
 		schedulerContractAddress,
 		dummyABI, // Or actual ABI if needed
 		fetchSchedulerRegistry,
-		pollInterval,
+		0, // No polling needed for a hardcoded address
 		specificLogger,
 	), nil
 }

@@ -19,15 +19,12 @@ type Config struct {
 		Gateway                    struct {
 			PollInterval time.Duration `yaml:"pollInterval"`
 		} `yaml:"gateway"`
-		Scheduler struct {
-			SmartContractAddress string        `yaml:"smartContractAddress"`
-			PollInterval         time.Duration `yaml:"pollInterval"`
-		} `yaml:"scheduler"`
 		Provider struct {
 			PollInterval time.Duration `yaml:"pollInterval"`
 		} `yaml:"provider"`
 	} `yaml:"registry"`
 	RpcProvider      string `yaml:"rpcProvider"`
+	SchedulerAddress string `yaml:"schedulerAddress"`
 	ModelBackendPath string `yaml:"modelBackendPath"`
 	NonceCache       struct {
 		TTL             time.Duration `yaml:"ttl"`
