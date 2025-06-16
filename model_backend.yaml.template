@@ -2,14 +2,4 @@
 # It allows node operators to configure specific models and point them to different URLs (backends).
 
 models:
-  # Example for a chat model
-  "gpt-3.5-turbo": "http://localhost:8081/v1/chat/completions"
-  
-  # Example for a completion model
-  "text-davinci-003": "http://localhost:8082/v1/completions"
-
-  # Example for an embedding model
-  "text-embedding-ada-002": "http://localhost:8083/v1/embeddings"
-
-  # Add other models and their backend URLs here
-  # "another-model": "http://another-backend.com/path"
+  "default": "http://localhost:8081"

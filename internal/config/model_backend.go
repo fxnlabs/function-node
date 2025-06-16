@@ -50,12 +50,19 @@ func (c *ModelBackendConfig) GetModelBackendURL(r *http.Request, log *zap.Logger
 	var modelExtractor ModelExtractor
 	if err := json.Unmarshal(bodyBytes, &modelExtractor); err != nil {
 		log.Warn("failed to unmarshal model from request body", zap.Error(err))
+		// Fallback to default if model is not found
+		if backendURL, ok := c.Models["default"]; ok {
+			return backendURL
+		}
 		return ""
 	}
 
 	modelBackendURL, ok := c.Models[modelExtractor.Model]
 	if !ok {
-		log.Warn("model not found in model_backend config", zap.String("model", modelExtractor.Model))
+		log.Warn("model not found in model_backend config, falling back to default", zap.String("model", modelExtractor.Model))
+		if backendURL, ok := c.Models["default"]; ok {
+			return backendURL
+		}
 		return ""
 	}
 	return modelBackendURL

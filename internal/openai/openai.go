@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/fxnlabs/function-node/internal/config"
 	"go.uber.org/zap"
@@ -45,7 +46,13 @@ func proxyRequest(r *http.Request, backendURL string) (*http.Response, error) {
 	r.Body.Close()
 
 	// Create a new request to the backend URL
-	proxyReq, err := http.NewRequest(r.Method, backendURL, bytes.NewReader(body))
+	target, err := url.Parse(backendURL)
+	if err != nil {
+		return nil, err
+	}
+	target = target.JoinPath(r.URL.Path)
+
+	proxyReq, err := http.NewRequest(r.Method, target.String(), bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
