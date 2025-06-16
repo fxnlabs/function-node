@@ -113,6 +113,30 @@ This script is a helper to help SHA256 and send a request to your node for testi
     ./scripts/send_request.sh "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}]}'
     ```
 
+    **Chat Completions Example (Streaming):**
+
+    ```bash
+    ./scripts/send_request.sh "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}], "stream": true}'
+    ```
+
+    **Completions Example:**
+
+    ```bash
+    ./scripts/send_request.sh "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time"}'
+    ```
+
+    **Completions Example (Streaming):**
+
+    ```bash
+    ./scripts/send_request.sh "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time", "stream": true}'
+    ```
+
+    **Embeddings Example:**
+
+    ```bash
+    ./scripts/send_request.sh "/v1/embeddings" '{"model": "text-embedding-ada-002", "input": "The quick brown fox jumped over the lazy dog"}'
+    ```
+
     **Challenge Example:**
 
     ```bash

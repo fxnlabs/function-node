@@ -3,13 +3,14 @@ node:
 logger:
   verbosity: "info"
 registry:
-  routerSmartContractAddress: ""
+  routerSmartContractAddress: "0x63bb292Cf4C94c4FE34756D650b66cdb34E376bB"
   gateway:
+    pollInterval: "1m"
+  scheduler:
     pollInterval: "1m"
   provider:
     pollInterval: "1m"
 rpcProvider: "https://devnet-rpc.function.network"
-schedulerAddress: ""
 modelBackendPath: "model_backend.yaml"
 nonceCache:
   ttl: "5m"
