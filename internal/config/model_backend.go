@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -34,15 +35,15 @@ func LoadModelBackendConfig(path string) (*ModelBackendConfig, error) {
 	return &config, nil
 }
 
-func (c *ModelBackendConfig) GetModelBackendURL(r *http.Request, log *zap.Logger) string {
+func (c *ModelBackendConfig) GetModelBackendURL(r *http.Request, log *zap.Logger) (string, error) {
 	if r.Body == nil {
 		log.Warn("request body is nil")
-		return ""
+		return "", fmt.Errorf("request body is nil")
 	}
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Warn("failed to read request body", zap.Error(err))
-		return ""
+		return "", fmt.Errorf("failed to read request body: %w", err)
 	}
 	r.Body.Close()
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
@@ -50,20 +51,13 @@ func (c *ModelBackendConfig) GetModelBackendURL(r *http.Request, log *zap.Logger
 	var modelExtractor ModelExtractor
 	if err := json.Unmarshal(bodyBytes, &modelExtractor); err != nil {
 		log.Warn("failed to unmarshal model from request body", zap.Error(err))
-		// Fallback to default if model is not found
-		if backendURL, ok := c.Models["default"]; ok {
-			return backendURL
-		}
-		return ""
+		return "", fmt.Errorf("failed to unmarshal model from request body: %w", err)
 	}
 
 	modelBackendURL, ok := c.Models[modelExtractor.Model]
 	if !ok {
-		log.Warn("model not found in model_backend config, falling back to default", zap.String("model", modelExtractor.Model))
-		if backendURL, ok := c.Models["default"]; ok {
-			return backendURL
-		}
-		return ""
+		log.Warn("model not found in model_backend config", zap.String("model", modelExtractor.Model))
+		return "", fmt.Errorf("model not found in model_backend config: %s", modelExtractor.Model)
 	}
-	return modelBackendURL
+	return modelBackendURL, nil
 }

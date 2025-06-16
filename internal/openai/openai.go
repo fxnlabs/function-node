@@ -13,9 +13,9 @@ import (
 // NewOAIHandler creates a new http.HandlerFunc that proxies requests to the given backendURL.
 func NewOAIHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		backendURL := backendConfig.GetModelBackendURL(r, log)
-		if backendURL == "" {
-			http.Error(w, "model not found or could not parse model from request", http.StatusBadRequest)
+		backendURL, err := backendConfig.GetModelBackendURL(r, log)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		NewProxyHandler(backendURL)(w, r)
