@@ -67,7 +67,7 @@
 
 ## Example API Calls
 
-To simplify testing the API, you can use the `send_gateway_request.sh` script. This script automatically generates the required signature and sends the request.
+To simplify testing the API, you can use the `send_gateway_request.py` script. This script automatically generates the required signature and sends the request.
 
 **Note:** The OpenAI endpoints can only be called by registered gateways, and the `/challenge` endpoint can only be called by the registered scheduler.
 
@@ -86,21 +86,20 @@ The signature is created by signing the following string with your private key:
 sha256(request_body) + "." + timestamp + "." + nonce
 ```
 
-### Using the `send_gateway_request.sh` Script
+### Using the `send_gateway_request.py` Script
 This script is a helper to help SHA256 and send a request to your node for testing purposes.
 
-1.  **Set your private key:**
+1.  **Install dependencies:**
+    ```bash
+    pip install -r scripts/requirements.txt
+    ```
+
+2.  **Set your private key:**
 
     Export your hex-encoded private key as an environment variable.
 
     ```bash
     export PRIVATE_KEY=your_private_key_here
-    ```
-
-2.  **Make the script executable:**
-
-    ```bash
-    chmod +x ./scripts/send_gateway_request.sh
     ```
 
 3.  **Run the script:**
@@ -110,51 +109,50 @@ This script is a helper to help SHA256 and send a request to your node for testi
     **Chat Completions Example:**
 
     ```bash
-    ./scripts/send_gateway_request.sh "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}]}'
+    python scripts/send_gateway_request.py "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}]}'
     ```
 
     **Chat Completions Example (Streaming):**
 
     ```bash
-    ./scripts/send_gateway_request.sh "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}], "stream": true}'
+    python scripts/send_gateway_request.py "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}], "stream": true}'
     ```
 
     **Completions Example:**
 
     ```bash
-    ./scripts/send_gateway_request.sh "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time"}'
+    python scripts/send_gateway_request.py "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time"}'
     ```
 
     **Completions Example (Streaming):**
 
     ```bash
-    ./scripts/send_gateway_request.sh "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time", "stream": true}'
+    python scripts/send_gateway_request.py "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time", "stream": true}'
     ```
 
     **Embeddings Example:**
 
     ```bash
-    ./scripts/send_gateway_request.sh "/v1/embeddings" '{"model": "text-embedding-ada-002", "input": "The quick brown fox jumped over the lazy dog"}'
+    python scripts/send_gateway_request.py "/v1/embeddings" '{"model": "text-embedding-ada-002", "input": "The quick brown fox jumped over the lazy dog"}'
     ```
 
     ### Challenge Examples
 
-    To test the `/challenge` endpoint, you can use the `send_challenge_request.sh` script. This script handles the authentication and signing of the request.
+    To test the `/challenge` endpoint, you can use the `send_challenge_request.py` script. This script handles the authentication and signing of the request.
 
     **Note:** The `/challenge` endpoint can only be called by the registered scheduler. The private key for the scheduler is available in `scripts/scheduler_test_key.json`.
 
-    1.  **Set your private key:**
+    1.  **Install dependencies:**
+        ```bash
+        pip install -r scripts/requirements.txt
+        ```
+
+    2.  **Set your private key:**
 
         Export the scheduler's private key as an environment variable.
 
         ```bash
         export PRIVATE_KEY=$(jq -r .private_key scripts/scheduler_test_key.json)
-        ```
-
-    2.  **Make the script executable:**
-
-        ```bash
-        chmod +x ./scripts/send_challenge_request.sh
         ```
 
     3.  **Run the script with the desired challenge:**
@@ -166,7 +164,7 @@ This script is a helper to help SHA256 and send a request to your node for testi
         This challenge verifies the node's identity. The payload is not used.
 
         ```bash
-        ./scripts/send_challenge_request.sh '{"type": "IDENTITY", "payload": {}}'
+        python scripts/send_challenge_request.py '{"type": "IDENTITY", "payload": {}}'
         ```
 
         **Matrix Multiplication Challenge:**
@@ -174,7 +172,7 @@ This script is a helper to help SHA256 and send a request to your node for testi
         This challenge performs a matrix multiplication. The payload must contain two matrices, `A` and `B`.
 
         ```bash
-        ./scripts/send_challenge_request.sh '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
+        python scripts/send_challenge_request.py '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
         ```
 
         **Endpoint Reachable Challenge:**
@@ -182,5 +180,5 @@ This script is a helper to help SHA256 and send a request to your node for testi
         This challenge checks if an endpoint is reachable. The payload must be the URL of the endpoint to check.
 
         ```bash
-        ./scripts/send_challenge_request.sh '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
+        python scripts/send_challenge_request.py '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
         ```
