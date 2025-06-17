@@ -3,6 +3,7 @@ package registry
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 
@@ -19,7 +20,7 @@ import (
 type Gateway struct {
 	Owner        common.Address `json:"owner"`
 	ID           []byte         `json:"id"` // Note: Solidity bytes type maps to []byte in Go
-	RegisteredAt uint64         `json:"registeredAt"`
+	RegisteredAt *big.Int       `json:"registeredAt"`
 	Metadata     string         `json:"metadata"`
 	Paused       bool           `json:"paused"`
 }

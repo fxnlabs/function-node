@@ -48,6 +48,13 @@ This command is a helper to help SHA256 and send a request to your node for test
     export PRIVATE_KEY=your_private_key_here
     ```
 
+    or 
+
+    ```bash
+    export PRIVATE_KEY=$(jq -r .private_key scripts/gateway_test_key.json)
+    export PRIVATE_KEY=$(jq -r .private_key scripts/scheduler_test_key.json)
+    ```
+
 2.  **Run the command:**
 
     The command takes two arguments: the request type (`gateway` or `challenge`) and the request body.
