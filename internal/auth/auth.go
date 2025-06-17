@@ -3,6 +3,7 @@ package auth
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -61,6 +62,13 @@ func (c *NonceCache) Use(nonce string) {
 
 // AuthenticateChallenge verifies a signature against a message and an address.
 func AuthenticateChallenge(signature, message []byte, address string) (bool, error) {
+	if len(signature) == 65 {
+		// EIP-155 replay protection, v is 27 or 28
+		if signature[64] == 27 || signature[64] == 28 {
+			signature[64] -= 27
+		}
+	}
+
 	sigPublicKey, err := crypto.SigToPub(message, signature)
 	if err != nil {
 		return false, err
@@ -85,10 +93,16 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 			return
 		}
 
-		signature := []byte(r.Header.Get("X-Signature"))
-		if len(signature) == 0 {
+		signatureStr := r.Header.Get("X-Signature")
+		if signatureStr == "" {
 			log.Warn("missing X-Signature header")
 			http.Error(w, "missing X-Signature header", http.StatusUnauthorized)
+			return
+		}
+		signature, err := hex.DecodeString(signatureStr)
+		if err != nil {
+			log.Warn("invalid X-Signature header", zap.Error(err))
+			http.Error(w, "invalid X-Signature header", http.StatusBadRequest)
 			return
 		}
 
@@ -122,10 +136,11 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 		r.Body.Close()
 		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
-		hash := sha256.Sum256(bodyBytes)
-		message := []byte(fmt.Sprintf("%x.%s.%s", hash, timestampStr, nonce))
+		bodyHash := sha256.Sum256(bodyBytes)
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestampStr, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
 
-		valid, err := AuthenticateChallenge(signature, message, address)
+		valid, err := AuthenticateChallenge(signature, messageHash, address)
 		if err != nil {
 			log.Error("failed to authenticate request", zap.Error(err))
 			http.Error(w, "internal server error", http.StatusInternalServerError)

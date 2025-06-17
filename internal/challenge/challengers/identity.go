@@ -48,7 +48,8 @@ func (c *IdentityChallenger) Execute(payload interface{}, log *zap.Logger) (inte
 	publicKeyBytes := crypto.FromECDSAPub(publicKey.(*ecdsa.PublicKey))
 
 	message := []byte(fmt.Sprintf("%s.%s", publicKeyBytes, ip))
-	signature, err := crypto.Sign(message, c.privateKey)
+	hash := crypto.Keccak256(message)
+	signature, err := crypto.Sign(hash, c.privateKey)
 	if err != nil {
 		log.Error("Failed to sign identity message", zap.Error(err))
 		return nil, err

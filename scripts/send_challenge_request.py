@@ -4,8 +4,8 @@ import time
 import hashlib
 import secrets
 import requests
-from ecdsa import SigningKey, SECP256k1
 from eth_account import Account
+from eth_account.messages import encode_defunct
 
 def main():
     # Get private key from environment variable
@@ -27,21 +27,19 @@ def main():
     timestamp = str(int(time.time()))
     nonce = secrets.token_hex(16)
     body_hash = hashlib.sha256(request_body.encode('utf-8')).hexdigest()
-    message_to_sign = f"{body_hash}.{timestamp}.{nonce}"
+    message_to_sign_str = f"{body_hash}.{timestamp}.{nonce}"
+    message_to_sign = encode_defunct(text=message_to_sign_str)
 
     # Sign the message
-    private_key = SigningKey.from_string(bytes.fromhex(private_key_hex), curve=SECP256k1)
-    signature = private_key.sign(message_to_sign.encode('utf-8'))
-
-    # Get the address
     acct = Account.from_key(private_key_hex)
+    signed_message = acct.sign_message(message_to_sign)
     address = acct.address
 
     print(f"Sending request to {url}")
     print(f"Address: {address}")
     print(f"Timestamp: {timestamp}")
     print(f"Nonce: {nonce}")
-    print(f"Signature: {signature.hex()}")
+    print(f"Signature: {signed_message.signature.hex()}")
     print("")
 
     headers = {
@@ -49,7 +47,7 @@ def main():
         "X-Address": address,
         "X-Timestamp": timestamp,
         "X-Nonce": nonce,
-        "X-Signature": signature.hex()
+        "X-Signature": signed_message.signature.hex()
     }
 
     try:
