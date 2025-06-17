@@ -1,6 +1,7 @@
 package challenge
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,21 +22,21 @@ type Challenge struct {
 }
 
 // NewChallenger creates a new challenger based on the challenge type.
-func NewChallenger(challengeType string) (Challenger, error) {
+func NewChallenger(challengeType string, privateKey *ecdsa.PrivateKey) (Challenger, error) {
 	switch challengeType {
-	case "POLL_GPU_STATS":
-		return &challengers.GPUStatsChallenger{}, nil
 	case "MATRIX_MULTIPLICATION":
 		return &challengers.MatrixMultiplicationChallenger{}, nil
 	case "POLL_ENDPOINT_REACHABLE":
 		return &challengers.EndpointReachableChallenger{}, nil
+	case "IDENTITY":
+		return challengers.NewIdentityChallenger(privateKey), nil
 	default:
 		return nil, fmt.Errorf("unknown challenge type: %s", challengeType)
 	}
 }
 
 // ChallengeHandler handles challenge requests.
-func ChallengeHandler(log *zap.Logger) http.HandlerFunc {
+func ChallengeHandler(log *zap.Logger, privateKey *ecdsa.PrivateKey) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var challenge Challenge
 		if err := json.NewDecoder(r.Body).Decode(&challenge); err != nil {
@@ -43,7 +44,7 @@ func ChallengeHandler(log *zap.Logger) http.HandlerFunc {
 			return
 		}
 
-		challenger, err := NewChallenger(challenge.Type)
+		challenger, err := NewChallenger(challenge.Type, privateKey)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/auth"
 	"github.com/fxnlabs/function-node/internal/challenge"
@@ -31,6 +32,11 @@ func main() {
 	modelBackendConfig, err := config.LoadModelBackendConfig(cfg.ModelBackendPath)
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
+	}
+
+	privateKey, err := crypto.LoadECDSA(cfg.Node.Keyfile)
+	if err != nil {
+		rootLogger.Fatal("failed to load private key", zap.Error(err))
 	}
 
 	// Initialize Ethereum client
@@ -70,7 +76,7 @@ func main() {
 	// If IsProviderRegistered is part of auth, it might use this providerRegistry.
 	_ = providerRegistry // Placeholder to use providerRegistry, remove if it's passed to a consumer
 
-	challengeHandler := challenge.ChallengeHandler(rootLogger)
+	challengeHandler := challenge.ChallengeHandler(rootLogger, privateKey)
 	// Assuming AuthMiddleware might need providerRegistry if it performs provider registration checks.
 	// If not, schedulerRegistry might be the correct one for challenges.
 	// Based on existing code, schedulerRegistry is used for /challenge

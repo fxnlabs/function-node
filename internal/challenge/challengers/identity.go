@@ -1,19 +1,68 @@
 package challengers
 
 import (
+	"crypto/ecdsa"
 	"fmt"
+	"io"
+	"net/http"
 	"os/exec"
 	"runtime"
 	"strings"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/zap"
 )
 
-// GPUStatsChallenger polls GPU stats.
-type GPUStatsChallenger struct{}
+// IdentityChallenger provides a challenge that returns the node's identity.
+type IdentityChallenger struct {
+	privateKey *ecdsa.PrivateKey
+}
 
-// Execute polls the metadata of the GPUs using nvidia-smi.
-func (c *GPUStatsChallenger) Execute(payload interface{}, log *zap.Logger) (interface{}, error) {
+// NewIdentityChallenger creates a new IdentityChallenger.
+func NewIdentityChallenger(privateKey *ecdsa.PrivateKey) *IdentityChallenger {
+	return &IdentityChallenger{privateKey: privateKey}
+}
+
+// Execute returns the public key, IP address, and a signature.
+func (c *IdentityChallenger) Execute(payload interface{}, log *zap.Logger) (interface{}, error) {
+	resp, err := http.Get("https://api.ipify.org")
+	if err != nil {
+		log.Error("Failed to get public IP address", zap.Error(err))
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	ip, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Error("Failed to read public IP address response", zap.Error(err))
+		return nil, err
+	}
+
+	gpuStats, err := getGPUStats(log)
+	if err != nil {
+		// Not all nodes will have GPUs, so we log the error but don't fail the challenge
+		log.Warn("Could not get GPU stats", zap.Error(err))
+	}
+
+	publicKey := c.privateKey.Public()
+	publicKeyBytes := crypto.FromECDSAPub(publicKey.(*ecdsa.PublicKey))
+
+	message := []byte(fmt.Sprintf("%s.%s", publicKeyBytes, ip))
+	signature, err := crypto.Sign(message, c.privateKey)
+	if err != nil {
+		log.Error("Failed to sign identity message", zap.Error(err))
+		return nil, err
+	}
+
+	return map[string]interface{}{
+		"publicKey": crypto.PubkeyToAddress(*publicKey.(*ecdsa.PublicKey)).Hex(),
+		"ipAddress": string(ip),
+		"signature": signature,
+		"gpuStats":  gpuStats,
+	}, nil
+}
+
+func getGPUStats(log *zap.Logger) (map[string]interface{}, error) {
 	log.Info("Polling GPU stats...")
 
 	var output []byte
