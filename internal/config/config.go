@@ -9,7 +9,8 @@ import (
 
 type Config struct {
 	Node struct {
-		Keyfile string `yaml:"keyfile"`
+		Keyfile    string `yaml:"keyfile"`
+		ListenPort int    `yaml:"listenPort"`
 	} `yaml:"node"`
 	Logger struct {
 		Verbosity string `yaml:"verbosity"`

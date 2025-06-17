@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -90,8 +91,9 @@ func main() {
 	modelsHandler := openai.NewModelsHandler(modelBackendConfig, rootLogger)
 	http.Handle("/v1/models", auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry))
 
-	rootLogger.Info("Starting server on :8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	addr := fmt.Sprintf(":%d", cfg.Node.ListenPort)
+	rootLogger.Info("Starting server on", zap.String("address", addr))
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		rootLogger.Fatal("failed to start server", zap.Error(err))
 	}
 }
