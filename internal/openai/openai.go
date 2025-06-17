@@ -27,12 +27,13 @@ type ModelList struct {
 // NewOAIProxyHandler creates a new http.HandlerFunc that proxies requests to the given backendURL.
 func NewOAIProxyHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		backendURL, err := backendConfig.GetModelBackendURL(r, log)
+		modelBackend, err := backendConfig.GetModelBackend(r, log)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		NewProxyHandler(backendURL)(w, r)
+
+		proxyRequest(r, modelBackend, w)
 	}
 }
 
@@ -60,53 +61,52 @@ func NewModelsHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger)
 	}
 }
 
-// NewProxyHandler creates a new http.HandlerFunc that proxies requests to the given backendURL.
-func NewProxyHandler(backendURL string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		resp, err := proxyRequest(r, backendURL)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		defer resp.Body.Close()
-
-		copyHeaders(w.Header(), resp.Header)
-		w.WriteHeader(resp.StatusCode)
-		io.Copy(w, resp.Body)
-	}
-}
-
-func proxyRequest(r *http.Request, backendURL string) (*http.Response, error) {
+func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.ResponseWriter) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	r.Body.Close()
 
 	// Create a new request to the backend URL
-	target, err := url.Parse(backendURL)
+	target, err := url.Parse(modelBackend.URL)
 	if err != nil {
-		return nil, err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 	target = target.JoinPath(r.URL.Path)
 
 	proxyReq, err := http.NewRequest(r.Method, target.String(), bytes.NewReader(body))
 	if err != nil {
-		return nil, err
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	// Copy headers from the original request to the new one
 	proxyReq.Header = make(http.Header)
 	copyHeaders(proxyReq.Header, r.Header)
 
+	if modelBackend.Auth != nil {
+		if modelBackend.Auth.APIKey != "" {
+			proxyReq.Header.Set("x-api-key", modelBackend.Auth.APIKey)
+		} else if modelBackend.Auth.BearerToken != "" {
+			proxyReq.Header.Set("Authorization", "Bearer "+modelBackend.Auth.BearerToken)
+		}
+	}
+
 	// Send the request
 	client := &http.Client{}
 	resp, err := client.Do(proxyReq)
 	if err != nil {
-		return nil, err
+		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
 	}
+	defer resp.Body.Close()
 
-	return resp, nil
+	copyHeaders(w.Header(), resp.Header)
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }
 
 func copyHeaders(dst, src http.Header) {

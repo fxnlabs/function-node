@@ -2,4 +2,13 @@
 # It allows node operators to configure specific models and point them to different URLs (backends).
 
 models:
-  "default": "http://localhost:8081"
+  "default":
+    url: "http://localhost:8081"
+  # "gpt-4":
+  #   url: "http://another-backend:8082"
+  #   auth:
+  #     api_key: "your-api-key"
+  # "claude-2":
+  #   url: "http://secure-backend:8083"
+  #   auth:
+  #     bearer_token: "your-bearer-token"

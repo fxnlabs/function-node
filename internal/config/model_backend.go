@@ -12,8 +12,18 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type AuthConfig struct {
+	APIKey      string `yaml:"api_key,omitempty"`
+	BearerToken string `yaml:"bearer_token,omitempty"`
+}
+
+type ModelBackend struct {
+	URL  string      `yaml:"url"`
+	Auth *AuthConfig `yaml:"auth,omitempty"`
+}
+
 type ModelBackendConfig struct {
-	Models map[string]string `yaml:"models"`
+	Models map[string]ModelBackend `yaml:"models"`
 }
 
 type ModelExtractor struct {
@@ -35,29 +45,42 @@ func LoadModelBackendConfig(path string) (*ModelBackendConfig, error) {
 	return &config, nil
 }
 
-func (c *ModelBackendConfig) GetModelBackendURL(r *http.Request, log *zap.Logger) (string, error) {
+func (c *ModelBackendConfig) GetModelBackend(r *http.Request, log *zap.Logger) (*ModelBackend, error) {
 	if r.Body == nil {
 		log.Warn("request body is nil")
-		return "", fmt.Errorf("request body is nil")
+		return nil, fmt.Errorf("request body is nil")
 	}
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Warn("failed to read request body", zap.Error(err))
-		return "", fmt.Errorf("failed to read request body: %w", err)
+		return nil, fmt.Errorf("failed to read request body: %w", err)
 	}
 	r.Body.Close()
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	var modelExtractor ModelExtractor
-	if err := json.Unmarshal(bodyBytes, &modelExtractor); err != nil {
-		log.Warn("failed to unmarshal model from request body", zap.Error(err))
-		return "", fmt.Errorf("failed to unmarshal model from request body: %w", err)
+	err = json.Unmarshal(bodyBytes, &modelExtractor)
+
+	var modelName string
+	if err != nil {
+		log.Info("could not extract model from request body, using default", zap.Error(err))
+		modelName = "default"
+	} else {
+		modelName = modelExtractor.Model
 	}
 
-	modelBackendURL, ok := c.Models[modelExtractor.Model]
+	modelBackend, ok := c.Models[modelName]
 	if !ok {
-		log.Warn("model not found in model_backend config", zap.String("model", modelExtractor.Model))
-		return "", fmt.Errorf("model not found in model_backend config: %s", modelExtractor.Model)
+		if modelName != "default" {
+			// fallback to default if model not found
+			log.Info("model not found, falling back to default", zap.String("model", modelName))
+			modelBackend, ok = c.Models["default"]
+		}
+		if !ok {
+			log.Warn("model not found in model_backend config", zap.String("model", modelName))
+			return nil, fmt.Errorf("model not found in model_backend config: %s", modelName)
+		}
 	}
-	return modelBackendURL, nil
+
+	return &modelBackend, nil
 }
