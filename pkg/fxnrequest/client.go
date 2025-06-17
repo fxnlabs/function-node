@@ -1,4 +1,4 @@
-package auth_client
+package fxnrequest
 
 import (
 	"bytes"

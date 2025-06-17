@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fxnlabs/function-node/pkg/auth_client"
+	"github.com/fxnlabs/function-node/pkg/fxnrequest"
 )
 
 func main() {
@@ -36,7 +36,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	client, err := auth_client.New(privateKeyHex)
+	client, err := fxnrequest.New(privateKeyHex)
 	if err != nil {
 		fmt.Printf("Error creating client: %s\n", err)
 		os.Exit(1)
