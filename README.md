@@ -67,7 +67,7 @@
 
 ## Example API Calls
 
-To simplify testing the API, you can use the `send_gateway_request.py` script. This script automatically generates the required signature and sends the request.
+To simplify testing the API, you can use the `send_request` command. This script automatically generates the required signature and sends the request.
 
 **Note:** The OpenAI endpoints can only be called by registered gateways, and the `/challenge` endpoint can only be called by the registered scheduler.
 
@@ -75,7 +75,7 @@ To simplify testing the API, you can use the `send_gateway_request.py` script. T
 
 All API requests must include the following headers for authentication:
 
-- `X-Public-Key`: Your hex-encoded public key.
+- `X-Address`: Your Ethereum address.
 - `X-Timestamp`: A Unix timestamp of when the request was made.
 - `X-Nonce`: A unique, randomly generated string for each request to prevent replay attacks.
 - `X-Signature`: A signature of the request payload.
@@ -86,99 +86,52 @@ The signature is created by signing the following string with your private key:
 sha256(request_body) + "." + timestamp + "." + nonce
 ```
 
-### Using the `send_gateway_request.py` Script
-This script is a helper to help SHA256 and send a request to your node for testing purposes.
+### Using the `send_request` Command
+This command is a helper to help SHA256 and send a request to your node for testing purposes.
 
-1.  **Install dependencies:**
-    ```bash
-    pip install -r scripts/requirements.txt
-    ```
+1.  **Set your private key:**
 
-2.  **Set your private key:**
-
-    Export your hex-encoded private key as an environment variable.
+    Export your hex-encoded private key as an environment variable. For gateway requests, use your gateway key. For challenge requests, use the scheduler key.
 
     ```bash
     export PRIVATE_KEY=your_private_key_here
     ```
 
-3.  **Run the script:**
+2.  **Run the command:**
 
-    The script takes two arguments: the endpoint and the request body.
+    The command takes two arguments: the request type (`gateway` or `challenge`) and the request body.
 
-    **Chat Completions Example:**
+    **Gateway Request Examples:**
 
-    ```bash
-    python scripts/send_gateway_request.py "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}]}'
-    ```
-
-    **Chat Completions Example (Streaming):**
+    For gateway requests, you'll typically be calling the OpenAI proxy endpoints.
 
     ```bash
-    python scripts/send_gateway_request.py "/v1/chat/completions" '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}], "stream": true}'
+    # Chat Completions
+    go run cmd/send_request/main.go gateway '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}]}'
+
+    # Embeddings
+    go run cmd/send_request/main.go gateway '{"model": "text-embedding-ada-002", "input": "The quick brown fox jumped over the lazy dog"}'
     ```
 
-    **Completions Example:**
+    **Challenge Request Examples:**
+
+    To test the `/challenge` endpoint, use the `challenge` request type. The private key for the scheduler is available in `scripts/scheduler_test_key.json`.
 
     ```bash
-    python scripts/send_gateway_request.py "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time"}'
+    export PRIVATE_KEY=$(jq -r .private_key scripts/scheduler_test_key.json)
     ```
 
-    **Completions Example (Streaming):**
-
+    **Identity Challenge:**
     ```bash
-    python scripts/send_gateway_request.py "/v1/completions" '{"model": "text-davinci-003", "prompt": "Once upon a time", "stream": true}'
+    go run cmd/send_request/main.go challenge '{"type": "IDENTITY", "payload": {}}'
     ```
 
-    **Embeddings Example:**
-
+    **Matrix Multiplication Challenge:**
     ```bash
-    python scripts/send_gateway_request.py "/v1/embeddings" '{"model": "text-embedding-ada-002", "input": "The quick brown fox jumped over the lazy dog"}'
+    go run cmd/send_request/main.go challenge '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
     ```
 
-    ### Challenge Examples
-
-    To test the `/challenge` endpoint, you can use the `send_challenge_request.py` script. This script handles the authentication and signing of the request.
-
-    **Note:** The `/challenge` endpoint can only be called by the registered scheduler. The private key for the scheduler is available in `scripts/scheduler_test_key.json`.
-
-    1.  **Install dependencies:**
-        ```bash
-        pip install -r scripts/requirements.txt
-        ```
-
-    2.  **Set your private key:**
-
-        Export the scheduler's private key as an environment variable.
-
-        ```bash
-        export PRIVATE_KEY=$(jq -r .private_key scripts/scheduler_test_key.json)
-        ```
-
-    3.  **Run the script with the desired challenge:**
-
-        The script takes one argument: the request body. The `type` field in the JSON payload determines which challenge to run.
-
-        **Identity Challenge:**
-
-        This challenge verifies the node's identity. The payload is not used.
-
-        ```bash
-        python scripts/send_challenge_request.py '{"type": "IDENTITY", "payload": {}}'
-        ```
-
-        **Matrix Multiplication Challenge:**
-
-        This challenge performs a matrix multiplication. The payload must contain two matrices, `A` and `B`.
-
-        ```bash
-        python scripts/send_challenge_request.py '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
-        ```
-
-        **Endpoint Reachable Challenge:**
-
-        This challenge checks if an endpoint is reachable. The payload must be the URL of the endpoint to check.
-
-        ```bash
-        python scripts/send_challenge_request.py '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
-        ```
+    **Endpoint Reachable Challenge:**
+    ```bash
+    go run cmd/send_request/main.go challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
+    ```
