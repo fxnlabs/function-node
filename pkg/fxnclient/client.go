@@ -1,4 +1,4 @@
-package fxnrequest
+package fxnclient
 
 import (
 	"bytes"
@@ -13,27 +13,27 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// AuthenticatedClient is a client that can send authenticated requests.
-type AuthenticatedClient struct {
+// FxnClient is a client that can send authenticated requests.
+type FxnClient struct {
 	privateKey *ecdsa.PrivateKey
 	client     *http.Client
 }
 
-// New creates a new AuthenticatedClient.
-func New(privateKeyHex string) (*AuthenticatedClient, error) {
+// NewFxnClient creates a new FxnClient.
+func NewFxnClient(privateKeyHex string, client *http.Client) (*FxnClient, error) {
 	privateKey, err := crypto.HexToECDSA(privateKeyHex)
 	if err != nil {
 		return nil, fmt.Errorf("invalid private key: %w", err)
 	}
 
-	return &AuthenticatedClient{
+	return &FxnClient{
 		privateKey: privateKey,
-		client:     &http.Client{},
+		client:     client,
 	}, nil
 }
 
 // SendRequest sends an authenticated request to the specified URL.
-func (c *AuthenticatedClient) SendRequest(method, url string, body []byte) (*http.Response, error) {
+func (c *FxnClient) SendRequest(method, url string, body []byte) (*http.Response, error) {
 	timestamp := fmt.Sprintf("%d", time.Now().Unix())
 	nonce := fmt.Sprintf("%x", rand.Int63())
 	bodyHash := sha256.Sum256(body)
