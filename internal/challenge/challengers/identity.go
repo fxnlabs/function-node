@@ -76,7 +76,7 @@ func (c *IdentityChallenger) Execute(payload interface{}, log *zap.Logger) (inte
 	}, nil
 }
 
-func getGPUStats(log *zap.Logger) (map[string]interface{}, error) {
+func getGPUStats(log *zap.Logger) ([]GPUStat, error) {
 	log.Info("Polling GPU stats...")
 
 	var output []byte
@@ -113,13 +113,8 @@ func getGPUStats(log *zap.Logger) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	statsMap := make(map[string]interface{})
-	for i, stat := range gpuStats {
-		statsMap[fmt.Sprintf("gpu_%d", i)] = stat
-	}
-
 	log.Info("Successfully polled GPU stats")
-	return statsMap, nil
+	return gpuStats, nil
 }
 
 func getMacGPUStats(log *zap.Logger) ([]byte, error) {
