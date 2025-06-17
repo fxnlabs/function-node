@@ -18,9 +18,9 @@
 ### Challenges Endpoint (internal/challenge)
 - [x] Implement periodic challenge endpoint calls from the Scheduler to verify latency, hardware, and overall health.
 - [x] Define challenges:
-	- [x] Poll metadata of GPUs provided by node operators
-	- [x] Matrix multiplication challenge to ensure authenticity of node operator GPU responses and speed
-	- [x] Basic poll checks to ensure endpoints are reachable
+	- [x] **Identity**: Verifies the node's identity and retrieves GPU statistics.
+	- [x] **Matrix Multiplication**: Performs a matrix multiplication challenge.
+	- [x] **Endpoint Reachable**: Checks if an endpoint is reachable. This will be improved to be a "proxy challenge".
 
 ### Smart Contracts (internal/contracts)
 - [x] Implement RPC calls to smart contracts using VIEM to grab related registries.

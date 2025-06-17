@@ -61,9 +61,9 @@ operators to configure specific models and point them to different URLs
 * A central `ChallengeHandler` receives all challenge requests and delegates them to the appropriate challenger based on the challenge type.
 * Each challenge is implemented in its own file in the `internal/challenge/challengers` directory.
 * Defined challenges:
-	1. **Poll GPU Stats**: Polls metadata of GPUs provided by provider operators.
+	1. **Identity**: Verifies the node's identity by returning its public key and IP address, along with a signature. It also gathers and returns GPU statistics if available.
 	2. **Matrix Multiplication**: Performs a matrix multiplication challenge to ensure the authenticity of provider operator GPU responses and speed.
-	3. **Poll Endpoint Reachable**: Basic poll checks to ensure endpoints are reachable.
+	3. **Endpoint Reachable**: Basic poll checks to ensure endpoints are reachable. This challenge is planned to be improved into a "proxy challenge," allowing the scheduler to hit any endpoint and use the response or error code to judge the result.
 
 ## Smart Contracts (internal/registry, internal/contracts)
 
