@@ -1,6 +1,35 @@
 # Function Node
 
-### Using the `send_request` Command
+## Quick Start
+
+1.  **Copy Templates:**
+
+    Create your `model_backend.yaml` and `config.yaml` from the provided templates.
+
+    ```bash
+    cp model_backend.yaml.template model_backend.yaml
+    cp config.yaml.template config.yaml
+    ```
+
+2.  **Generate Node Key:**
+
+    Create a new account (keypair) for your node.
+
+    ```bash
+    go run cmd/cli/main.go accounts new
+    ```
+
+    This will output your node private key and address.
+
+3.  **Run the Node:**
+
+    Start the node software.
+
+    ```bash
+    go run cmd/node/main.go
+    ```
+
+## Using the `send_request` Command for Testing
 This command is a helper to help SHA256 and send a request to your node for testing purposes.
 
 1.  **Set your private key:**
@@ -48,4 +77,3 @@ This command is a helper to help SHA256 and send a request to your node for test
     **Endpoint Reachable Challenge:**
     ```bash
     go run cmd/send_request/main.go challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
-    ```
