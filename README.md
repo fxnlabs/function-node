@@ -1,5 +1,7 @@
 # Function Node
 
+The Function Node is the core software for providers on the Function Network, a peer-to-peer system for decentralized AI inference. It serves as a secure, observable proxy to any OpenAI-compatible LLM endpoint, authenticating requests from network gateways and responding to health and performance challenges from schedulers. The node interacts with on-chain registries to stay synced with the network.
+
 ## Quick Start
 
 1.  **Copy Templates:**
@@ -28,6 +30,12 @@
     ```bash
     go run cmd/node/main.go
     ```
+
+## Implementation Details
+
+For a detailed explanation of the Function Node's implementation, please see the [implementation details](implementation.md).
+
+To check the current implementation status, refer to the [implementation status](implementation_status.md).
 
 ## Using the `send_request` Command for Testing
 This command is a helper to help SHA256 and send a request to your node for testing purposes.
@@ -77,3 +85,4 @@ This command is a helper to help SHA256 and send a request to your node for test
     **Endpoint Reachable Challenge:**
     ```bash
     go run cmd/send_request/main.go challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
+    ``
