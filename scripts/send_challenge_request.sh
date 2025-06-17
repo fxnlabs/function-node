@@ -26,7 +26,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 REQUEST_BODY=$1
-ENDPOINT="/v1/challenges"
+ENDPOINT="/challenge"
 URL="http://localhost:8080$ENDPOINT"
 
 # Generate required headers
