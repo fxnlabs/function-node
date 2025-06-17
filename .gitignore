@@ -46,3 +46,4 @@ model_backend.yaml
 # Keystore
 /keystore
 nodekey
+nodekey.json

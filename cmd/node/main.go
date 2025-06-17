@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/auth"
 	"github.com/fxnlabs/function-node/internal/challenge"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
 	"github.com/fxnlabs/function-node/internal/logger"
+	"github.com/fxnlabs/function-node/internal/node"
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
 	"go.uber.org/zap"
@@ -34,7 +34,7 @@ func main() {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
 
-	privateKey, err := crypto.LoadECDSA(cfg.Node.Keyfile)
+	privateKey, _, err := node.LoadPrivateKey(cfg.Node.Keyfile)
 	if err != nil {
 		rootLogger.Fatal("failed to load private key", zap.Error(err))
 	}

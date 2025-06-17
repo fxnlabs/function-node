@@ -1,13 +1,12 @@
 package main
 
 import (
-	"crypto/ecdsa"
-	"encoding/hex"
+	"fmt"
 	"os"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/logger"
+	"github.com/fxnlabs/function-node/internal/node"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
@@ -45,46 +44,33 @@ func main() {
 					{
 						Name:  "new",
 						Usage: "Create a new account",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "out",
+								Value: "nodekey.json",
+								Usage: "path to save the key file",
+							},
+						},
 						Action: func(c *cli.Context) error {
-							privateKey, err := crypto.GenerateKey()
-							if err != nil {
-								return err
-							}
-
-							privateKeyBytes := crypto.FromECDSA(privateKey)
-							err = os.WriteFile("nodekey", []byte(hex.EncodeToString(privateKeyBytes)), 0600)
-							if err != nil {
-								return err
-							}
-
-							publicKey := privateKey.Public()
-							publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-							if !ok {
-								log.Fatal("error casting public key to ECDSA")
-							}
-
-							log.Info("New account created", zap.String("address", crypto.PubkeyToAddress(*publicKeyECDSA).Hex()))
-							return nil
+							return node.GenerateKeyFile(c.String("out"))
 						},
 					},
 					{
 						Name:  "get",
 						Usage: "Get the account address",
+						Flags: []cli.Flag{
+							&cli.StringFlag{
+								Name:  "in",
+								Value: "nodekey.json",
+								Usage: "path to the key file",
+							},
+						},
 						Action: func(c *cli.Context) error {
-							privateKeyBytes, err := os.ReadFile("nodekey")
+							_, address, err := node.LoadPrivateKey(c.String("in"))
 							if err != nil {
 								return err
 							}
-							privateKey, err := crypto.HexToECDSA(string(privateKeyBytes))
-							if err != nil {
-								return err
-							}
-							publicKey := privateKey.Public()
-							publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-							if !ok {
-								log.Fatal("error casting public key to ECDSA")
-							}
-							log.Info("Account address", zap.String("address", crypto.PubkeyToAddress(*publicKeyECDSA).Hex()))
+							log.Info("Account address", zap.String("address", address.Hex()))
 							return nil
 						},
 					},
@@ -97,7 +83,8 @@ func main() {
 		if log != nil {
 			log.Fatal("failed to run app", zap.Error(err))
 		} else {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
 		}
 	}
 }
