@@ -2,7 +2,6 @@ package auth
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -60,27 +59,28 @@ func (c *NonceCache) Use(nonce string) {
 	c.nonces[nonce] = time.Now()
 }
 
-// AuthenticateChallenge verifies a signature against a message and public key.
-func AuthenticateChallenge(signature, message []byte, publicKey ecdsa.PublicKey) (bool, error) {
+// AuthenticateChallenge verifies a signature against a message and an address.
+func AuthenticateChallenge(signature, message []byte, address string) (bool, error) {
 	sigPublicKey, err := crypto.SigToPub(message, signature)
 	if err != nil {
 		return false, err
 	}
 
-	return sigPublicKey == &publicKey, nil
+	recoveredAddress := crypto.PubkeyToAddress(*sigPublicKey).Hex()
+	return recoveredAddress == address, nil
 }
 
 func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, reg *registry.CachedRegistry) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		publicKey := r.Header.Get("X-Public-Key")
-		if publicKey == "" {
-			log.Warn("missing X-Public-Key header")
-			http.Error(w, "missing X-Public-Key header", http.StatusUnauthorized)
+		address := r.Header.Get("X-Address")
+		if address == "" {
+			log.Warn("missing X-Address header")
+			http.Error(w, "missing X-Address header", http.StatusUnauthorized)
 			return
 		}
 
-		if _, ok := reg.Get(publicKey); !ok {
-			log.Warn("node not registered", zap.String("publicKey", publicKey))
+		if _, ok := reg.Get(address); !ok {
+			log.Warn("node not registered", zap.String("address", address))
 			http.Error(w, "node not registered", http.StatusUnauthorized)
 			return
 		}
@@ -89,13 +89,6 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 		if len(signature) == 0 {
 			log.Warn("missing X-Signature header")
 			http.Error(w, "missing X-Signature header", http.StatusUnauthorized)
-			return
-		}
-
-		privateKey, err := crypto.HexToECDSA(publicKey)
-		if err != nil {
-			log.Error("failed to parse public key", zap.String("publicKey", publicKey), zap.Error(err))
-			http.Error(w, "invalid public key", http.StatusBadRequest)
 			return
 		}
 
@@ -132,7 +125,7 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 		hash := sha256.Sum256(bodyBytes)
 		message := []byte(fmt.Sprintf("%x.%s.%s", hash, timestampStr, nonce))
 
-		valid, err := AuthenticateChallenge(signature, message, privateKey.PublicKey)
+		valid, err := AuthenticateChallenge(signature, message, address)
 		if err != nil {
 			log.Error("failed to authenticate request", zap.Error(err))
 			http.Error(w, "internal server error", http.StatusInternalServerError)
@@ -140,7 +133,7 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 		}
 
 		if !valid {
-			log.Warn("invalid signature", zap.String("publicKey", publicKey))
+			log.Warn("invalid signature", zap.String("address", address))
 			http.Error(w, "invalid signature", http.StatusUnauthorized)
 			return
 		}

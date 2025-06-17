@@ -5,6 +5,7 @@ import hashlib
 import secrets
 import requests
 from ecdsa import SigningKey, SECP256k1
+from eth_account import Account
 
 def main():
     # Get private key from environment variable
@@ -32,11 +33,12 @@ def main():
     private_key = SigningKey.from_string(bytes.fromhex(private_key_hex), curve=SECP256k1)
     signature = private_key.sign(message_to_sign.encode('utf-8'))
 
-    # Get the public key
-    public_key = private_key.get_verifying_key().to_string("compressed").hex()
+    # Get the address
+    acct = Account.from_key(private_key_hex)
+    address = acct.address
 
     print(f"Sending request to {url}")
-    print(f"Public Key: {public_key}")
+    print(f"Address: {address}")
     print(f"Timestamp: {timestamp}")
     print(f"Nonce: {nonce}")
     print(f"Signature: {signature.hex()}")
@@ -44,7 +46,7 @@ def main():
 
     headers = {
         "Content-Type": "application/json",
-        "X-Public-Key": public_key,
+        "X-Address": address,
         "X-Timestamp": timestamp,
         "X-Nonce": nonce,
         "X-Signature": signature.hex()
