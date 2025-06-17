@@ -82,10 +82,13 @@ func main() {
 	// Based on existing code, schedulerRegistry is used for /challenge
 	http.Handle("/challenge", auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry))
 
-	oaiHandler := openai.NewOAIHandler(modelBackendConfig, rootLogger)
-	http.Handle("/v1/chat/completions", auth.AuthMiddleware(oaiHandler, rootLogger, nonceCache, gatewayRegistry))
-	http.Handle("/v1/completions", auth.AuthMiddleware(oaiHandler, rootLogger, nonceCache, gatewayRegistry))
-	http.Handle("/v1/embeddings", auth.AuthMiddleware(oaiHandler, rootLogger, nonceCache, gatewayRegistry))
+	oaiProxyHandler := openai.NewOAIProxyHandler(modelBackendConfig, rootLogger)
+	http.Handle("/v1/chat/completions", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
+	http.Handle("/v1/completions", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
+	http.Handle("/v1/embeddings", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
+
+	modelsHandler := openai.NewModelsHandler(modelBackendConfig, rootLogger)
+	http.Handle("/v1/models", auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry))
 
 	rootLogger.Info("Starting server on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {

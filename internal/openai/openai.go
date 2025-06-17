@@ -2,16 +2,30 @@ package openai
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/fxnlabs/function-node/internal/config"
 	"go.uber.org/zap"
 )
 
-// NewOAIHandler creates a new http.HandlerFunc that proxies requests to the given backendURL.
-func NewOAIHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
+type Model struct {
+	ID      string `json:"id"`
+	Object  string `json:"object"`
+	Created int64  `json:"created"`
+	OwnedBy string `json:"owned_by"`
+}
+
+type ModelList struct {
+	Object string  `json:"object"`
+	Data   []Model `json:"data"`
+}
+
+// NewOAIProxyHandler creates a new http.HandlerFunc that proxies requests to the given backendURL.
+func NewOAIProxyHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		backendURL, err := backendConfig.GetModelBackendURL(r, log)
 		if err != nil {
@@ -19,6 +33,30 @@ func NewOAIHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) ht
 			return
 		}
 		NewProxyHandler(backendURL)(w, r)
+	}
+}
+
+func NewModelsHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		models := make([]Model, 0, len(backendConfig.Models))
+		for modelID := range backendConfig.Models {
+			models = append(models, Model{
+				ID:      modelID,
+				Object:  "model",
+				Created: time.Now().Unix(),
+				OwnedBy: "fxn",
+			})
+		}
+
+		modelList := ModelList{
+			Object: "list",
+			Data:   models,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(modelList); err != nil {
+			http.Error(w, "Failed to encode models", http.StatusInternalServerError)
+		}
 	}
 }
 
