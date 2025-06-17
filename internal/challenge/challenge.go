@@ -26,7 +26,7 @@ func NewChallenger(challengeType string, privateKey *ecdsa.PrivateKey) (Challeng
 	switch challengeType {
 	case "MATRIX_MULTIPLICATION":
 		return &challengers.MatrixMultiplicationChallenger{}, nil
-	case "POLL_ENDPOINT_REACHABLE":
+	case "ENDPOINT_REACHABLE":
 		return &challengers.EndpointReachableChallenger{}, nil
 	case "IDENTITY":
 		return challengers.NewIdentityChallenger(privateKey), nil

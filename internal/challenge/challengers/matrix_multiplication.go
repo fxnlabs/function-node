@@ -59,6 +59,18 @@ func (c *MatrixMultiplicationChallenger) Execute(payload interface{}, log *zap.L
 	var res mat.Dense
 	res.Mul(a, b)
 
+	r, cols := res.Dims()
+	resultMatrix := make([][]float64, r)
+	for i := range r {
+		resultMatrix[i] = make([]float64, cols)
+		for j := range cols {
+			resultMatrix[i][j] = res.At(i, j)
+		}
+	}
+
 	log.Info("Matrix multiplication successful")
-	return map[string]bool{"success": true}, nil
+
+	return map[string]interface{}{
+		"C": resultMatrix,
+	}, nil
 }
