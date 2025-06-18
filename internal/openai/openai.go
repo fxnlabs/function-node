@@ -33,7 +33,7 @@ func NewOAIProxyHandler(backendConfig *config.ModelBackendConfig, log *zap.Logge
 			return
 		}
 
-		proxyRequest(r, modelBackend, w)
+		proxyRequest(r, modelBackend, w, &http.Client{})
 	}
 }
 
@@ -61,10 +61,10 @@ func NewModelsHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger)
 	}
 }
 
-func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.ResponseWriter) {
+func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.ResponseWriter, client *http.Client) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	r.Body.Close()
@@ -72,14 +72,14 @@ func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.Res
 	// Create a new request to the backend URL
 	target, err := url.Parse(modelBackend.URL)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 	target = target.JoinPath(r.URL.Path)
 
 	proxyReq, err := http.NewRequest(r.Method, target.String(), bytes.NewReader(body))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 
@@ -96,7 +96,6 @@ func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.Res
 	}
 
 	// Send the request
-	client := &http.Client{}
 	resp, err := client.Do(proxyReq)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)

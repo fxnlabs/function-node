@@ -216,3 +216,84 @@ func TestNewOAIProxyHandler_EmptyBody(t *testing.T) {
 	handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusBadGateway, rr.Code)
 }
+
+type errorReader struct{}
+
+func (errorReader) Read(p []byte) (n int, err error) {
+	return 0, assert.AnError
+}
+
+func TestNewOAIProxyHandler_BodyReadError(t *testing.T) {
+	log := zap.NewNop()
+	backendConfig := &config.ModelBackendConfig{
+		Models: map[string]config.ModelBackend{
+			"default": {
+				URL: "http://localhost",
+			},
+		},
+	}
+	handler := NewOAIProxyHandler(backendConfig, log)
+	req := httptest.NewRequest("POST", "/v1/chat/completions", errorReader{})
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+}
+
+type errorWriter struct{}
+
+func (errorWriter) Header() http.Header {
+	return http.Header{}
+}
+
+func (errorWriter) Write(p []byte) (n int, err error) {
+	return 0, assert.AnError
+}
+
+func (errorWriter) WriteHeader(statusCode int) {}
+
+func TestNewModelsHandler_EncoderError(t *testing.T) {
+	log := zap.NewNop()
+	backendConfig := &config.ModelBackendConfig{
+		Models: map[string]config.ModelBackend{
+			"model-1": {},
+		},
+	}
+	handler := NewModelsHandler(backendConfig, log)
+	req := httptest.NewRequest("GET", "/v1/models", nil)
+	rr := errorWriter{}
+	handler.ServeHTTP(rr, req)
+}
+
+type errorTransport struct{}
+
+func (t *errorTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return nil, assert.AnError
+}
+
+func TestProxyRequest_ClientDoError(t *testing.T) {
+	log := zap.NewNop()
+	backendConfig := &config.ModelBackendConfig{
+		Models: map[string]config.ModelBackend{
+			"model-1": {
+				URL: "http://localhost",
+			},
+		},
+	}
+
+	// Create a custom client with the error-producing transport
+	client := &http.Client{
+		Transport: &errorTransport{},
+	}
+
+	reqBody := `{"model": "model-1"}`
+	req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
+	rr := httptest.NewRecorder()
+
+	// We need to get the modelBackend to pass to proxyRequest
+	modelBackend, err := backendConfig.GetModelBackend(req, log)
+	require.NoError(t, err)
+
+	proxyRequest(req, modelBackend, rr, client)
+
+	assert.Equal(t, http.StatusBadGateway, rr.Code)
+}
