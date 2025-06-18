@@ -54,9 +54,9 @@ func main() {
 
 	// Initialize router
 	routerAddress := common.HexToAddress(cfg.Registry.RouterSmartContractAddress)
-	router, err := contracts.NewRouter(ethClientWrapper, routerAddress, rootLogger)
+	router, err := contracts.NewRouter(ethClientWrapper, routerAddress, rootLogger, contracts.DefaultRouterABIPath)
 	if err != nil {
-		rootLogger.Fatal("failed to initialize router", zap.Error(err))
+		rootLogger.Fatal("failed to create router", zap.Error(err))
 	}
 
 	// Initialize registries

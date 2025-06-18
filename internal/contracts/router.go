@@ -13,6 +13,10 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	DefaultRouterABIPath = "../../fixtures/abi/Router.json"
+)
+
 type Router struct {
 	client          ethclient.EthClient
 	contractAddress common.Address
@@ -20,8 +24,8 @@ type Router struct {
 	logger          *zap.Logger
 }
 
-func NewRouter(client ethclient.EthClient, contractAddress common.Address, logger *zap.Logger) (*Router, error) {
-	abiBytes, err := os.ReadFile("../../fixtures/abi/Router.json")
+func NewRouter(client ethclient.EthClient, contractAddress common.Address, logger *zap.Logger, abiPath string) (*Router, error) {
+	abiBytes, err := os.ReadFile(abiPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Router ABI file: %w", err)
 	}
