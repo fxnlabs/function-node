@@ -4,7 +4,7 @@ packages:
   github.com/fxnlabs/function-node/internal/registry:
     config:
       dir: ./mocks/registry
-      outpkg: registry
+      outpkg: mocks
     interfaces:
       Registry:
   github.com/fxnlabs/function-node/internal/challenge/challengers:
