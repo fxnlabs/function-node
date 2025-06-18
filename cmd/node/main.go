@@ -10,8 +10,8 @@ import (
 	"github.com/fxnlabs/function-node/internal/challenge"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
+	"github.com/fxnlabs/function-node/internal/keys"
 	"github.com/fxnlabs/function-node/internal/logger"
-	"github.com/fxnlabs/function-node/internal/node"
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
 	ethclientpkg "github.com/fxnlabs/function-node/pkg/ethclient"
@@ -36,7 +36,7 @@ func main() {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
 
-	privateKey, _, err := node.LoadPrivateKey(cfg.Node.Keyfile)
+	privateKey, _, err := keys.LoadPrivateKey(cfg.Node.Keyfile)
 	if err != nil {
 		rootLogger.Fatal("failed to load private key", zap.Error(err))
 	}

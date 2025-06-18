@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/fxnlabs/function-node/internal/config"
+	"github.com/fxnlabs/function-node/internal/keys"
 	"github.com/fxnlabs/function-node/internal/logger"
-	"github.com/fxnlabs/function-node/internal/node"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
@@ -52,7 +52,7 @@ func main() {
 							},
 						},
 						Action: func(c *cli.Context) error {
-							return node.GenerateKeyFile(c.String("out"))
+							return keys.GenerateKeyFile(c.String("out"))
 						},
 					},
 					{
@@ -66,7 +66,7 @@ func main() {
 							},
 						},
 						Action: func(c *cli.Context) error {
-							_, address, err := node.LoadPrivateKey(c.String("in"))
+							_, address, err := keys.LoadPrivateKey(c.String("in"))
 							if err != nil {
 								return err
 							}

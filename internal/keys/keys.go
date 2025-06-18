@@ -1,4 +1,4 @@
-package node
+package keys
 
 import (
 	"crypto/ecdsa"
