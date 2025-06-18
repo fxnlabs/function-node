@@ -19,6 +19,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var gatewayABIPath = filepath.Join("../../", GatewayRegistryABIPath)
+
 func TestNewGatewayRegistry(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.Registry.Gateway.PollInterval = 1 * time.Second
@@ -30,7 +32,7 @@ func TestNewGatewayRegistry(t *testing.T) {
 		mockRouter.EXPECT().GetGatewayRegistryAddress().Return(common.HexToAddress("0x123"), nil)
 
 		// Mock the initial call to fetch the gateway registry
-		abiFileContent, err := os.ReadFile(filepath.Join("../../", GatewayRegistryABIPath))
+		abiFileContent, err := os.ReadFile(gatewayABIPath)
 		assert.NoError(t, err)
 		parsedABI, err := abi.JSON(strings.NewReader(string(abiFileContent)))
 		assert.NoError(t, err)
@@ -39,7 +41,7 @@ func TestNewGatewayRegistry(t *testing.T) {
 		assert.NoError(t, err)
 		mockClient.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).Return(packedOutput, nil)
 
-		registry, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter)
+		registry, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter, providerABIPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, registry)
 	})
@@ -48,7 +50,7 @@ func TestNewGatewayRegistry(t *testing.T) {
 		mockClient := ethclient.NewMockEthClient(t)
 		mockRouter := contracts.NewMockRouter(t)
 		mockRouter.EXPECT().GetGatewayRegistryAddress().Return(common.Address{}, errors.New("router error"))
-		_, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter)
+		_, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter, providerABIPath)
 		assert.Error(t, err)
 	})
 }
@@ -57,7 +59,7 @@ func TestFetchGatewayRegistry(t *testing.T) {
 	logger := zap.NewNop()
 	contractAddress := common.HexToAddress("0x123")
 
-	abiFileContent, err := os.ReadFile(filepath.Join("../../", GatewayRegistryABIPath))
+	abiFileContent, err := os.ReadFile(gatewayABIPath)
 	assert.NoError(t, err)
 	parsedABI, err := abi.JSON(strings.NewReader(string(abiFileContent)))
 	assert.NoError(t, err)

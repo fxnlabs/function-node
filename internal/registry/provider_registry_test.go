@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/big"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +19,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var providerABIPath = filepath.Join("../../", ProviderRegistryABIPath)
+
 func TestNewProviderRegistry(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.Registry.Provider.PollInterval = 1 * time.Second
@@ -29,7 +32,8 @@ func TestNewProviderRegistry(t *testing.T) {
 		mockRouter.EXPECT().GetProviderRegistryAddress().Return(common.HexToAddress("0x123"), nil)
 
 		// Mock the initial call to fetch the provider registry
-		abiFileContent, err := os.ReadFile(ProviderRegistryABIPath)
+
+		abiFileContent, err := os.ReadFile(providerABIPath)
 		assert.NoError(t, err)
 		parsedABI, err := abi.JSON(strings.NewReader(string(abiFileContent)))
 		assert.NoError(t, err)
@@ -38,31 +42,16 @@ func TestNewProviderRegistry(t *testing.T) {
 		assert.NoError(t, err)
 		mockClient.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).Return(packedOutput, nil)
 
-		registry, err := NewProviderRegistry(mockClient, cfg, logger, mockRouter)
+		registry, err := NewProviderRegistry(mockClient, cfg, logger, mockRouter, providerABIPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, registry)
-	})
-
-	t.Run("ABIFileReadError", func(t *testing.T) {
-		mockClient := ethclient.NewMockEthClient(t)
-		mockRouter := contracts.NewMockRouter(t)
-
-		// Temporarily move the ABI file to simulate a read error
-		originalPath := ProviderRegistryABIPath
-		tempPath := ProviderRegistryABIPath + ".tmp"
-		err := os.Rename(originalPath, tempPath)
-		assert.NoError(t, err)
-		defer os.Rename(tempPath, originalPath)
-
-		_, err = NewProviderRegistry(mockClient, cfg, logger, mockRouter)
-		assert.Error(t, err)
 	})
 
 	t.Run("GetProviderRegistryAddressError", func(t *testing.T) {
 		mockClient := ethclient.NewMockEthClient(t)
 		mockRouter := contracts.NewMockRouter(t)
 		mockRouter.EXPECT().GetProviderRegistryAddress().Return(common.Address{}, errors.New("router error"))
-		_, err := NewProviderRegistry(mockClient, cfg, logger, mockRouter)
+		_, err := NewProviderRegistry(mockClient, cfg, logger, mockRouter, providerABIPath)
 		assert.Error(t, err)
 	})
 }
@@ -71,7 +60,7 @@ func TestFetchProviderRegistry(t *testing.T) {
 	logger := zap.NewNop()
 	contractAddress := common.HexToAddress("0x123")
 
-	abiFileContent, err := os.ReadFile(ProviderRegistryABIPath)
+	abiFileContent, err := os.ReadFile(providerABIPath)
 	assert.NoError(t, err)
 	parsedABI, err := abi.JSON(strings.NewReader(string(abiFileContent)))
 	assert.NoError(t, err)

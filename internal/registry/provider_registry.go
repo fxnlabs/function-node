@@ -34,10 +34,11 @@ func NewProviderRegistry(
 	cfg *config.Config,
 	logger *zap.Logger,
 	router contracts.Router,
+	abiPath string,
 ) (*CachedRegistry, error) {
 	var parsedABI abi.ABI
 	var err error
-	abiBytes, err := os.ReadFile(ProviderRegistryABIPath) // Adjust path if necessary
+	abiBytes, err := os.ReadFile(abiPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read ProviderRegistry ABI file: %w", err)
 	}

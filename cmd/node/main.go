@@ -60,7 +60,7 @@ func main() {
 	}
 
 	// Initialize registries
-	gatewayRegistry, err := registry.NewGatewayRegistry(ethClientWrapper, cfg, rootLogger, router)
+	gatewayRegistry, err := registry.NewGatewayRegistry(ethClientWrapper, cfg, rootLogger, router, registry.GatewayRegistryABIPath)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize gateway registry", zap.Error(err))
 	}
@@ -70,7 +70,7 @@ func main() {
 		rootLogger.Fatal("failed to initialize scheduler registry", zap.Error(err))
 	}
 
-	providerRegistry, err := registry.NewProviderRegistry(ethClientWrapper, cfg, rootLogger, router)
+	providerRegistry, err := registry.NewProviderRegistry(ethClientWrapper, cfg, rootLogger, router, registry.ProviderRegistryABIPath)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize provider registry", zap.Error(err))
 	}

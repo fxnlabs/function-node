@@ -35,9 +35,10 @@ func NewGatewayRegistry(
 	cfg *config.Config,
 	logger *zap.Logger,
 	router contracts.Router,
+	abiPath string,
 ) (*CachedRegistry, error) {
 	// Load ABI content from file
-	abiBytes, err := os.ReadFile(GatewayRegistryABIPath)
+	abiBytes, err := os.ReadFile(abiPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read GatewayRegistry ABI file: %w", err)
 	}
