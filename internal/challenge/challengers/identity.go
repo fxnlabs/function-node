@@ -157,6 +157,7 @@ func (c *IdentityChallenger) getNvidiaGPUStats(log *zap.Logger) ([]byte, error) 
 				log.Warn("nvidia-smi command not found, skipping GPU stats poll")
 				return nil, fmt.Errorf("nvidia-smi not found")
 			}
+			return nil, err
 		}
 		log.Error("Failed to execute nvidia-smi", zap.Error(err))
 		return nil, err
@@ -174,6 +175,7 @@ func (c *IdentityChallenger) getAmdGPUStats(log *zap.Logger) ([]byte, error) {
 				log.Warn("rocm-smi command not found, skipping GPU stats poll")
 				return nil, fmt.Errorf("rocm-smi not found")
 			}
+			return nil, err
 		}
 		log.Error("Failed to execute rocm-smi", zap.Error(err))
 		return nil, err
@@ -220,7 +222,11 @@ func (c *IdentityChallenger) getMacMemoryUsage(log *zap.Logger) (usedMB int, fre
 		if len(parts) == 2 {
 			key := strings.TrimSpace(parts[0])
 			valStr := strings.Trim(strings.TrimSpace(parts[1]), ".")
-			val, _ := strconv.Atoi(valStr)
+			val, err := strconv.Atoi(valStr)
+			if err != nil {
+				log.Warn("could not parse vm_stat value", zap.String("value", valStr))
+				continue
+			}
 
 			switch key {
 			case "Pages free":

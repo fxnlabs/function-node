@@ -329,9 +329,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 
 	t.Run("getNvidiaGPUStats not found", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
-		cmd := exec.Command("nvidia-smi-not-found")
-		cmd.Stderr = &bytes.Buffer{}
-		cmd.Stderr.Write([]byte("executable file not found"))
+		cmd := exec.Command("sh", "-c", "echo 'executable file not found' >&2; exit 1")
 		mockExec.On("Command", "nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits").Return(cmd)
 		challenger := &IdentityChallenger{
 			privateKey: privateKey,
@@ -340,6 +338,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 		}
 		_, err := challenger.getNvidiaGPUStats(log)
 		assert.Error(t, err)
+		assert.EqualError(t, err, "nvidia-smi not found")
 	})
 
 	t.Run("getNvidiaGPUStats error", func(t *testing.T) {
@@ -368,6 +367,20 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("getNvidiaGPUStats success", func(t *testing.T) {
+		mockExec := new(mocks.MockExecutor)
+		expectedOutput := "GeForce RTX 3080, 470.57.02, 10240, 1024, 9216, 90, 50"
+		mockExec.On("Command", "nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits").Return(exec.Command("echo", expectedOutput))
+		challenger := &IdentityChallenger{
+			privateKey: privateKey,
+			Client:     mockClient,
+			exec:       mockExec,
+		}
+		output, err := challenger.getNvidiaGPUStats(log)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedOutput+"\n", string(output))
+	})
+
 	t.Run("getNvidiaGPUStats generic error", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
 		mockExec.On("Command", "nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits").Return(exec.Command("non-existent-command"))
@@ -382,9 +395,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 
 	t.Run("getAmdGPUStats not found", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
-		cmd := exec.Command("rocm-smi-not-found")
-		cmd.Stderr = &bytes.Buffer{}
-		cmd.Stderr.Write([]byte("executable file not found"))
+		cmd := exec.Command("sh", "-c", "echo 'executable file not found' >&2; exit 1")
 		mockExec.On("Command", "rocm-smi", "--showproductname", "--showdriverversion", "--showmeminfo", "all", "--csv").Return(cmd)
 		challenger := &IdentityChallenger{
 			privateKey: privateKey,
@@ -393,6 +404,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 		}
 		_, err := challenger.getAmdGPUStats(log)
 		assert.Error(t, err)
+		assert.EqualError(t, err, "rocm-smi not found")
 	})
 
 	t.Run("getAmdGPUStats error", func(t *testing.T) {
@@ -419,6 +431,20 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 		}
 		_, err := challenger.getAmdGPUStats(log)
 		assert.Error(t, err)
+	})
+
+	t.Run("getAmdGPUStats success", func(t *testing.T) {
+		mockExec := new(mocks.MockExecutor)
+		expectedOutput := "card0, Radeon RX 6800, 16384, 1024"
+		mockExec.On("Command", "rocm-smi", "--showproductname", "--showdriverversion", "--showmeminfo", "all", "--csv").Return(exec.Command("echo", expectedOutput))
+		challenger := &IdentityChallenger{
+			privateKey: privateKey,
+			Client:     mockClient,
+			exec:       mockExec,
+		}
+		output, err := challenger.getAmdGPUStats(log)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedOutput+"\n", string(output))
 	})
 
 	t.Run("getAmdGPUStats generic error", func(t *testing.T) {
@@ -609,12 +635,14 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 
 	t.Run("getMacMemoryUsage invalid page value", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", "page size of 4096 bytes\nPages free: invalid"))
+		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", "page size of 4096 bytes\nPages free: invalid."))
 		challenger := &IdentityChallenger{
 			exec: mockExec,
 		}
-		_, _, err := challenger.getMacMemoryUsage(log)
+		used, free, err := challenger.getMacMemoryUsage(log)
 		assert.NoError(t, err)
+		assert.Equal(t, 0, used)
+		assert.Equal(t, 0, free)
 	})
 
 	t.Run("getMacMemoryUsage invalid line", func(t *testing.T) {
