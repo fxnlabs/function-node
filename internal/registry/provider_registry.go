@@ -31,7 +31,7 @@ func NewProviderRegistry(
 	client ethclient.EthClient,
 	cfg *config.Config,
 	logger *zap.Logger,
-	router *contracts.Router,
+	router contracts.Router,
 ) (*CachedRegistry, error) {
 	var parsedABI abi.ABI
 	var err error

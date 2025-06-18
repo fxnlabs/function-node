@@ -19,3 +19,9 @@ packages:
       outpkg: mocks
     interfaces:
       Executor:
+  github.com/fxnlabs/function-node/internal/contracts:
+    config:
+      dir: ./mocks/contracts
+      outpkg: mocks
+    interfaces:
+      Router:

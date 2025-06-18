@@ -16,13 +16,17 @@ import (
 	"go.uber.org/zap"
 )
 
+const (
+	GatewayRegistryABIPath = "../../fixtures/abi/GatewayRegistry.json"
+)
+
 // Gateway represents the structure of a gateway in the registry
 type Gateway struct {
-	Owner        common.Address `json:"owner"`
-	ID           []byte         `json:"id"` // Note: Solidity bytes type maps to []byte in Go
-	RegisteredAt *big.Int       `json:"registeredAt"`
-	Metadata     string         `json:"metadata"`
-	Paused       bool           `json:"paused"`
+	Owner        common.Address `json:"owner" abi:"owner"`
+	ID           []byte         `json:"id" abi:"id"`
+	RegisteredAt *big.Int       `json:"registeredAt" abi:"registeredAt"`
+	Metadata     string         `json:"metadata" abi:"metadata"`
+	Paused       bool           `json:"paused" abi:"paused"`
 }
 
 // NewGatewayRegistry creates a new cached registry for gateways.
@@ -30,10 +34,10 @@ func NewGatewayRegistry(
 	client ethclient.EthClient,
 	cfg *config.Config,
 	logger *zap.Logger,
-	router *contracts.Router,
+	router contracts.Router,
 ) (*CachedRegistry, error) {
 	// Load ABI content from file
-	abiBytes, err := os.ReadFile("fixtures/abi/GatewayRegistry.json")
+	abiBytes, err := os.ReadFile(GatewayRegistryABIPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read GatewayRegistry ABI file: %w", err)
 	}

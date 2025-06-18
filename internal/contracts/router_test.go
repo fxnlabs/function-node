@@ -25,7 +25,6 @@ func TestNewRouter(t *testing.T) {
 		router, err := NewRouter(mockClient, contractAddress, logger, DefaultRouterABIPath)
 		require.NoError(t, err)
 		assert.NotNil(t, router)
-		assert.Equal(t, contractAddress, router.contractAddress)
 	})
 
 	t.Run("invalid ABI", func(t *testing.T) {

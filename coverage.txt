@@ -1,0 +1,11 @@
+github.com/fxnlabs/function-node/internal/registry/gateway_registry.go:29:	NewGatewayRegistry	0.0%
+github.com/fxnlabs/function-node/internal/registry/gateway_registry.go:66:	fetchGatewayRegistry	0.0%
+github.com/fxnlabs/function-node/internal/registry/provider_registry.go:30:	NewProviderRegistry	0.0%
+github.com/fxnlabs/function-node/internal/registry/provider_registry.go:71:	fetchProviderRegistry	0.0%
+github.com/fxnlabs/function-node/internal/registry/registry.go:34:		NewCachedRegistry	0.0%
+github.com/fxnlabs/function-node/internal/registry/registry.go:58:		run			0.0%
+github.com/fxnlabs/function-node/internal/registry/registry.go:73:		updateCache		0.0%
+github.com/fxnlabs/function-node/internal/registry/registry.go:89:		Get			0.0%
+github.com/fxnlabs/function-node/internal/registry/scheduler_registry.go:14:	NewSchedulerRegistry	0.0%
+github.com/fxnlabs/function-node/internal/registry/scheduler_registry.go:45:	fetchSchedulerRegistry	0.0%
+total:										(statements)		0.0%

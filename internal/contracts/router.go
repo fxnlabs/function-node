@@ -17,14 +17,19 @@ const (
 	DefaultRouterABIPath = "../../fixtures/abi/Router.json"
 )
 
-type Router struct {
+type Router interface {
+	GetGatewayRegistryAddress() (common.Address, error)
+	GetProviderRegistryAddress() (common.Address, error)
+}
+
+type RouterImpl struct {
 	client          ethclient.EthClient
 	contractAddress common.Address
 	contractABI     abi.ABI
 	logger          *zap.Logger
 }
 
-func NewRouter(client ethclient.EthClient, contractAddress common.Address, logger *zap.Logger, abiPath string) (*Router, error) {
+func NewRouter(client ethclient.EthClient, contractAddress common.Address, logger *zap.Logger, abiPath string) (*RouterImpl, error) {
 	abiBytes, err := os.ReadFile(abiPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Router ABI file: %w", err)
@@ -36,7 +41,7 @@ func NewRouter(client ethclient.EthClient, contractAddress common.Address, logge
 		return nil, fmt.Errorf("failed to parse Router ABI: %w", err)
 	}
 
-	return &Router{
+	return &RouterImpl{
 		client:          client,
 		contractAddress: contractAddress,
 		contractABI:     parsedABI,
@@ -44,7 +49,7 @@ func NewRouter(client ethclient.EthClient, contractAddress common.Address, logge
 	}, nil
 }
 
-func (r *Router) getAddress(methodName string) (common.Address, error) {
+func (r *RouterImpl) getAddress(methodName string) (common.Address, error) {
 	callData, err := r.contractABI.Pack(methodName)
 	if err != nil {
 		r.logger.Error("Failed to pack data for get", zap.String("name", methodName), zap.Error(err))
@@ -71,10 +76,10 @@ func (r *Router) getAddress(methodName string) (common.Address, error) {
 	return addr, nil
 }
 
-func (r *Router) GetGatewayRegistryAddress() (common.Address, error) {
+func (r *RouterImpl) GetGatewayRegistryAddress() (common.Address, error) {
 	return r.getAddress("gatewayRegistry")
 }
 
-func (r *Router) GetProviderRegistryAddress() (common.Address, error) {
+func (r *RouterImpl) GetProviderRegistryAddress() (common.Address, error) {
 	return r.getAddress("providerRegistry")
 }
