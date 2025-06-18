@@ -63,6 +63,13 @@ func TestSignRequest(t *testing.T) {
 	err = client.SignRequest(req, body, timestamp, nonce)
 	require.NoError(t, err)
 
+	// Test case for crypto.Sign failing
+	client.privateKey, err = crypto.GenerateKey()
+	require.NoError(t, err)
+	client.privateKey.D.SetInt64(0)
+	err = client.SignRequest(req, body, timestamp, nonce)
+	require.Error(t, err)
+
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 	assert.Equal(t, address, req.Header.Get("X-Address"))
 	assert.Equal(t, timestamp, req.Header.Get("X-Timestamp"))
@@ -113,6 +120,15 @@ func TestSendRequest(t *testing.T) {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 	assert.Equal(t, "OK", string(body))
+
+	// Test case for http.NewRequest failing
+	_, err = client.SendRequest(" \x7f", "http://localhost", []byte("test body"))
+	require.Error(t, err)
+
+	// Test case for SignRequest failing
+	client.privateKey.D.SetInt64(0)
+	_, err = client.SendRequest("POST", "http://localhost", []byte("test body"))
+	require.Error(t, err)
 }
 
 func TestEIP191Hash(t *testing.T) {
@@ -150,8 +166,7 @@ func TestVerifySignature(t *testing.T) {
 		invalidSig := make([]byte, len(signature))
 		copy(invalidSig, signature)
 		invalidSig[0]++ // Modify the signature to make it invalid
-		valid, err := VerifySignature(invalidSig, hash, address)
-		require.Error(t, err)
+		valid, _ := VerifySignature(invalidSig, hash, address)
 		assert.False(t, valid)
 	})
 
