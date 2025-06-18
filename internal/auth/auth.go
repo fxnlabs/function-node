@@ -78,7 +78,7 @@ func AuthenticateChallenge(signature, message []byte, address string) (bool, err
 	return recoveredAddress == address, nil
 }
 
-func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, reg *registry.CachedRegistry) http.Handler {
+func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, reg registry.Registry) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		address := r.Header.Get("X-Address")
 		if address == "" {

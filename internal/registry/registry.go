@@ -10,6 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
+// Registry defines the interface for a registry that can be used by the auth middleware.
+type Registry interface {
+	Get(key string) (interface{}, bool)
+}
+
 // FetchFunc defines the signature for functions that fetch registry data.
 type FetchFunc func(client *ethclient.Client, contractAddress common.Address, contractABI abi.ABI, logger *zap.Logger) (map[string]interface{}, error)
 
@@ -87,3 +92,6 @@ func (cr *CachedRegistry) Get(key string) (interface{}, bool) {
 	val, ok := cr.cache[key]
 	return val, ok
 }
+
+// इंश्योर that CachedRegistry implements the Registry interface.
+var _ Registry = (*CachedRegistry)(nil)

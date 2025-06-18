@@ -37,6 +37,28 @@ For a detailed explanation of the Function Node's implementation, please see the
 
 To check the current implementation status, refer to the [implementation status](implementation_status.md).
 
+## Testing
+
+To run the test suite, use the following command:
+
+```bash
+go test ./...
+```
+
+### Mocks
+
+This project uses `mockery` to generate mocks for interfaces. To generate mocks, first install `mockery`:
+
+```bash
+go install github.com/vektra/mockery/v2@v2.43.2
+```
+
+Then, run the following command to generate the mocks based on the `.mockery.yaml` configuration file:
+
+```bash
+mockery
+```
+
 ## Using the `send_request` Command for Testing
 This command is a helper to help SHA256 and send a request to your node for testing purposes.
 
