@@ -188,4 +188,137 @@ func TestAuthMiddleware(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
+
+	t.Run("missing X-Signature", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/", strings.NewReader(""))
+		req.Header.Set("X-Address", address)
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("missing X-Timestamp", func(t *testing.T) {
+		body := []byte(`{"hello":"world"}`)
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		nonce := "test-nonce-missing-timestamp"
+
+		// Create a valid signature for this request
+		bodyHash := sha256.Sum256(body)
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestamp, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+		signature, err := crypto.Sign(messageHash, privateKey)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+		req.Header.Set("X-Address", address)
+		req.Header.Set("X-Signature", hex.EncodeToString(signature))
+		req.Header.Set("X-Nonce", nonce)
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("missing X-Nonce", func(t *testing.T) {
+		body := []byte(`{"hello":"world"}`)
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		nonce := "test-nonce-missing-nonce"
+
+		// Create a valid signature for this request
+		bodyHash := sha256.Sum256(body)
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestamp, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+		signature, err := crypto.Sign(messageHash, privateKey)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+		req.Header.Set("X-Address", address)
+		req.Header.Set("X-Signature", hex.EncodeToString(signature))
+		req.Header.Set("X-Timestamp", timestamp)
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("invalid signature", func(t *testing.T) {
+		body := []byte(`{"hello":"world"}`)
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		nonce := "test-nonce-invalid-sig"
+
+		// Create a valid signature for this request
+		bodyHash := sha256.Sum256(body)
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestamp, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+		signature, err := crypto.Sign(messageHash, privateKey)
+		require.NoError(t, err)
+
+		// Invalidate the signature
+		signature[0] = ^signature[0]
+
+		req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+		req.Header.Set("X-Address", address)
+		req.Header.Set("X-Signature", hex.EncodeToString(signature))
+		req.Header.Set("X-Timestamp", timestamp)
+		req.Header.Set("X-Nonce", nonce)
+
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+
+	t.Run("verify signature error", func(t *testing.T) {
+		body := []byte(`{"hello":"world"}`)
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		nonce := "test-nonce-verify-error"
+
+		// Create a valid signature for this request
+		bodyHash := sha256.Sum256(body)
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestamp, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+		signature, err := crypto.Sign(messageHash, privateKey)
+		require.NoError(t, err)
+
+		// make signature invalid to trigger an error in VerifySignature
+		signature[64] = 0
+
+		req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+		req.Header.Set("X-Address", address)
+		req.Header.Set("X-Signature", hex.EncodeToString(signature))
+		req.Header.Set("X-Timestamp", timestamp)
+		req.Header.Set("X-Nonce", nonce)
+
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("body read error", func(t *testing.T) {
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		nonce := "test-nonce-read-error"
+
+		// Create a valid signature for this request
+		bodyHash := sha256.Sum256([]byte{})
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestamp, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+		signature, err := crypto.Sign(messageHash, privateKey)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest("POST", "/", errReader(0))
+		req.Header.Set("X-Address", address)
+		req.Header.Set("X-Signature", hex.EncodeToString(signature))
+		req.Header.Set("X-Timestamp", timestamp)
+		req.Header.Set("X-Nonce", nonce)
+
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
+}
+
+type errReader int
+
+func (errReader) Read(p []byte) (n int, err error) {
+	return 0, fmt.Errorf("test error")
 }
