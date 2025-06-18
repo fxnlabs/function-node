@@ -115,4 +115,18 @@ func TestChallengeHandler(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, rr.Code)
 	})
+
+	t.Run("challenger execution error", func(t *testing.T) {
+		challenge := Challenge{
+			Type:    "ENDPOINT_REACHABLE",
+			Payload: 123, // Invalid payload to cause execution error
+		}
+		body, _ := json.Marshal(challenge)
+		req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+		rr := httptest.NewRecorder()
+
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	})
 }

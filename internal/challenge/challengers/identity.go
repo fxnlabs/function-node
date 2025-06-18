@@ -36,6 +36,7 @@ type IdentityChallenger struct {
 	privateKey *ecdsa.PrivateKey
 	Client     *http.Client
 	exec       Executor
+	goos       string
 }
 
 type CMDExecutor struct{}
@@ -50,6 +51,7 @@ func NewIdentityChallenger(privateKey *ecdsa.PrivateKey) *IdentityChallenger {
 		privateKey: privateKey,
 		Client:     http.DefaultClient,
 		exec:       &CMDExecutor{},
+		goos:       runtime.GOOS,
 	}
 }
 
@@ -100,7 +102,7 @@ func (c *IdentityChallenger) getGPUStats(log *zap.Logger) ([]GPUStat, error) {
 	var err error
 
 	var gpuType string
-	switch runtime.GOOS {
+	switch c.goos {
 	case "darwin":
 		output, err = c.getMacGPUStats(log)
 		gpuType = "mac"
@@ -284,9 +286,10 @@ func (c *IdentityChallenger) parseMacGPUStats(output []byte, log *zap.Logger) ([
 		} else if strings.HasPrefix(trimmedLine, "VRAM (Total):") && currentGPU != nil {
 			memStr := strings.TrimSpace(strings.Split(trimmedLine, ":")[1])
 			vramMb, err := parseMemoryString(memStr)
-			if err == nil {
-				currentGPU.VRAMTotalMB = vramMb
+			if err != nil {
+				return nil, err
 			}
+			currentGPU.VRAMTotalMB = vramMb
 		}
 	}
 
@@ -350,7 +353,7 @@ func parseAmdGPUStats(output []byte, log *zap.Logger) ([]GPUStat, error) {
 	// rocm-smi output has a header, so we skip it.
 	for _, line := range lines[1:] {
 		values := strings.Split(line, ",")
-		if len(values) < 5 {
+		if len(values) < 4 {
 			log.Warn("Unexpected rocm-smi format", zap.String("line", line))
 			continue
 		}
@@ -378,11 +381,7 @@ func parseMemoryString(memStr string) (int, error) {
 		return 0, fmt.Errorf("invalid memory string format: %s", memStr)
 	}
 
-	val, err := strconv.Atoi(matches[1])
-	if err != nil {
-		return 0, err
-	}
-
+	val, _ := strconv.Atoi(matches[1])
 	unit := strings.ToUpper(matches[2])
 	switch unit {
 	case "GB":

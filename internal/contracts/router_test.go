@@ -29,7 +29,7 @@ func TestNewRouter(t *testing.T) {
 	})
 
 	t.Run("invalid ABI", func(t *testing.T) {
-		_, err := NewRouter(mockClient, contractAddress, logger, "../../fixtures/abi/invalid_abi.json")
+		_, err := NewRouter(mockClient, contractAddress, logger, "../../fixtures/tests/invalid_abi.json")
 		assert.Error(t, err)
 	})
 }
