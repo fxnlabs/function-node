@@ -15,6 +15,11 @@ import (
 	"go.uber.org/zap"
 )
 
+// Executor interface for running external commands
+type Executor interface {
+	Command(name string, arg ...string) *exec.Cmd
+}
+
 type GPUStat struct {
 	Name              string  `json:"name"`
 	DriverVersion     string  `json:"driver_version"`
@@ -29,16 +34,28 @@ type GPUStat struct {
 // IdentityChallenger provides a challenge that returns the node's identity.
 type IdentityChallenger struct {
 	privateKey *ecdsa.PrivateKey
+	Client     *http.Client
+	exec       Executor
+}
+
+type CMDExecutor struct{}
+
+func (e *CMDExecutor) Command(name string, arg ...string) *exec.Cmd {
+	return exec.Command(name, arg...)
 }
 
 // NewIdentityChallenger creates a new IdentityChallenger.
 func NewIdentityChallenger(privateKey *ecdsa.PrivateKey) *IdentityChallenger {
-	return &IdentityChallenger{privateKey: privateKey}
+	return &IdentityChallenger{
+		privateKey: privateKey,
+		Client:     http.DefaultClient,
+		exec:       &CMDExecutor{},
+	}
 }
 
 // Execute returns the public key, IP address, and a signature.
 func (c *IdentityChallenger) Execute(payload interface{}, log *zap.Logger) (interface{}, error) {
-	resp, err := http.Get("https://api.ipify.org")
+	resp, err := c.Client.Get("https://api.ipify.org")
 	if err != nil {
 		log.Error("Failed to get public IP address", zap.Error(err))
 		return nil, err
@@ -51,7 +68,7 @@ func (c *IdentityChallenger) Execute(payload interface{}, log *zap.Logger) (inte
 		return nil, err
 	}
 
-	gpuStats, err := getGPUStats(log)
+	gpuStats, err := c.getGPUStats(log)
 	if err != nil {
 		// Not all nodes will have GPUs, so we log the error but don't fail the challenge
 		log.Warn("Could not get GPU stats", zap.Error(err))
@@ -76,7 +93,7 @@ func (c *IdentityChallenger) Execute(payload interface{}, log *zap.Logger) (inte
 	}, nil
 }
 
-func getGPUStats(log *zap.Logger) ([]GPUStat, error) {
+func (c *IdentityChallenger) getGPUStats(log *zap.Logger) ([]GPUStat, error) {
 	log.Info("Polling GPU stats...")
 
 	var output []byte
@@ -85,20 +102,20 @@ func getGPUStats(log *zap.Logger) ([]GPUStat, error) {
 	var gpuType string
 	switch runtime.GOOS {
 	case "darwin":
-		output, err = getMacGPUStats(log)
+		output, err = c.getMacGPUStats(log)
 		gpuType = "mac"
 	case "linux":
 		// For Linux, try nvidia-smi first, then rocm-smi
-		output, err = getNvidiaGPUStats(log)
+		output, err = c.getNvidiaGPUStats(log)
 		gpuType = "nvidia"
 		if err != nil {
 			log.Warn("nvidia-smi failed, trying rocm-smi", zap.Error(err))
-			output, err = getAmdGPUStats(log)
+			output, err = c.getAmdGPUStats(log)
 			gpuType = "amd"
 		}
 	default:
 		// Fallback to nvidia-smi for other OSes
-		output, err = getNvidiaGPUStats(log)
+		output, err = c.getNvidiaGPUStats(log)
 		gpuType = "nvidia"
 	}
 
@@ -107,7 +124,7 @@ func getGPUStats(log *zap.Logger) ([]GPUStat, error) {
 		return nil, err
 	}
 
-	gpuStats, err := parseGPUStats(output, gpuType, log)
+	gpuStats, err := parseGPUStats(output, gpuType, log, c)
 	if err != nil {
 		log.Error("Failed to parse GPU stats", zap.Error(err))
 		return nil, err
@@ -117,8 +134,8 @@ func getGPUStats(log *zap.Logger) ([]GPUStat, error) {
 	return gpuStats, nil
 }
 
-func getMacGPUStats(log *zap.Logger) ([]byte, error) {
-	cmd := exec.Command("system_profiler", "SPDisplaysDataType")
+func (c *IdentityChallenger) getMacGPUStats(log *zap.Logger) ([]byte, error) {
+	cmd := c.exec.Command("system_profiler", "SPDisplaysDataType")
 	output, err := cmd.Output()
 	if err != nil {
 		log.Error("system_profiler failed", zap.Error(err))
@@ -127,8 +144,8 @@ func getMacGPUStats(log *zap.Logger) ([]byte, error) {
 	return output, nil
 }
 
-func getNvidiaGPUStats(log *zap.Logger) ([]byte, error) {
-	cmd := exec.Command("nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits")
+func (c *IdentityChallenger) getNvidiaGPUStats(log *zap.Logger) ([]byte, error) {
+	cmd := c.exec.Command("nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits")
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -145,8 +162,8 @@ func getNvidiaGPUStats(log *zap.Logger) ([]byte, error) {
 	return output, nil
 }
 
-func getAmdGPUStats(log *zap.Logger) ([]byte, error) {
-	cmd := exec.Command("rocm-smi", "--showproductname", "--showdriverversion", "--showmeminfo", "all", "--csv")
+func (c *IdentityChallenger) getAmdGPUStats(log *zap.Logger) ([]byte, error) {
+	cmd := c.exec.Command("rocm-smi", "--showproductname", "--showdriverversion", "--showmeminfo", "all", "--csv")
 	output, err := cmd.Output()
 	if err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
@@ -162,8 +179,8 @@ func getAmdGPUStats(log *zap.Logger) ([]byte, error) {
 	return output, nil
 }
 
-func getMacSystemMemory(log *zap.Logger) (uint64, error) {
-	cmd := exec.Command("sysctl", "-n", "hw.memsize")
+func (c *IdentityChallenger) getMacSystemMemory(log *zap.Logger) (uint64, error) {
+	cmd := c.exec.Command("sysctl", "-n", "hw.memsize")
 	output, err := cmd.Output()
 	if err != nil {
 		log.Error("sysctl hw.memsize failed", zap.Error(err))
@@ -177,8 +194,8 @@ func getMacSystemMemory(log *zap.Logger) (uint64, error) {
 	return mem, nil
 }
 
-func getMacMemoryUsage(log *zap.Logger) (usedMB int, freeMB int, err error) {
-	cmd := exec.Command("vm_stat")
+func (c *IdentityChallenger) getMacMemoryUsage(log *zap.Logger) (usedMB int, freeMB int, err error) {
+	cmd := c.exec.Command("vm_stat")
 	output, err := cmd.Output()
 	if err != nil {
 		log.Error("failed to run vm_stat", zap.Error(err))
@@ -223,10 +240,10 @@ func getMacMemoryUsage(log *zap.Logger) (usedMB int, freeMB int, err error) {
 	return usedBytes / 1024 / 1024, freeBytes / 1024 / 1024, nil
 }
 
-func parseGPUStats(output []byte, gpuType string, log *zap.Logger) ([]GPUStat, error) {
+func parseGPUStats(output []byte, gpuType string, log *zap.Logger, c *IdentityChallenger) ([]GPUStat, error) {
 	switch gpuType {
 	case "mac":
-		return parseMacGPUStats(output, log)
+		return c.parseMacGPUStats(output, log)
 	case "nvidia":
 		return parseNvidiaGPUStats(output, log)
 	case "amd":
@@ -236,13 +253,13 @@ func parseGPUStats(output []byte, gpuType string, log *zap.Logger) ([]GPUStat, e
 	}
 }
 
-func parseMacGPUStats(output []byte, log *zap.Logger) ([]GPUStat, error) {
+func (c *IdentityChallenger) parseMacGPUStats(output []byte, log *zap.Logger) ([]GPUStat, error) {
 	var stats []GPUStat
 	lines := strings.Split(string(output), "\n")
 	var currentGPU *GPUStat
 	isAppleSilicon := false
 
-	cmd := exec.Command("sw_vers", "-productVersion")
+	cmd := c.exec.Command("sw_vers", "-productVersion")
 	ver, err := cmd.Output()
 	driverVersion := "N/A"
 	if err == nil {
@@ -278,13 +295,13 @@ func parseMacGPUStats(output []byte, log *zap.Logger) ([]GPUStat, error) {
 	}
 
 	if len(stats) > 0 && isAppleSilicon {
-		memBytes, err := getMacSystemMemory(log)
+		memBytes, err := c.getMacSystemMemory(log)
 		if err == nil {
 			memMB := memBytes / 1024 / 1024
 			stats[0].VRAMTotalMB = int(memMB)
 		}
 
-		usedMB, _, err := getMacMemoryUsage(log)
+		usedMB, _, err := c.getMacMemoryUsage(log)
 		if err == nil {
 			stats[0].VRAMUsedMB = usedMB
 			if stats[0].VRAMTotalMB > 0 {

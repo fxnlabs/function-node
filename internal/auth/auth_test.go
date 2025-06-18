@@ -89,7 +89,7 @@ func TestAuthMiddleware(t *testing.T) {
 
 	log := zap.NewNop()
 	nonceCache := NewNonceCache(1*time.Minute, 10*time.Second)
-	mockReg := new(mocks.Registry)
+	mockReg := new(mocks.MockRegistry)
 
 	// Setup mock expectations
 	mockReg.On("Get", address).Return(struct{}{}, true)

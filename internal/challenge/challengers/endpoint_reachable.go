@@ -8,7 +8,14 @@ import (
 )
 
 // EndpointReachableChallenger checks if an endpoint is reachable.
-type EndpointReachableChallenger struct{}
+type EndpointReachableChallenger struct {
+	Client *http.Client
+}
+
+// NewEndpointReachableChallenger creates a new EndpointReachableChallenger.
+func NewEndpointReachableChallenger() *EndpointReachableChallenger {
+	return &EndpointReachableChallenger{Client: http.DefaultClient}
+}
 
 // Execute checks if an endpoint is reachable.
 func (c *EndpointReachableChallenger) Execute(payload interface{}, log *zap.Logger) (interface{}, error) {
@@ -19,7 +26,7 @@ func (c *EndpointReachableChallenger) Execute(payload interface{}, log *zap.Logg
 
 	log.Info("Polling endpoint", zap.String("endpoint", endpoint))
 
-	resp, err := http.Get(endpoint)
+	resp, err := c.Client.Get(endpoint)
 	if err != nil {
 		log.Error("Failed to reach endpoint", zap.String("endpoint", endpoint), zap.Error(err))
 		return nil, err

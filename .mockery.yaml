@@ -1,9 +1,15 @@
 # See https://vektra.github.io/mockery/v2.43/features/configuration/
 # for all configuration options.
 packages:
-  ./internal/registry:
+  github.com/fxnlabs/function-node/internal/registry:
     config:
       dir: ./mocks/registry
       outpkg: registry
     interfaces:
       Registry:
+  github.com/fxnlabs/function-node/internal/challenge/challengers:
+    config:
+      dir: ./mocks/challengers
+      outpkg: mocks
+    interfaces:
+      Executor:
