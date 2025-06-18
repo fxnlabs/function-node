@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DefaultRouterABIPath = "../../fixtures/abi/Router.json"
+	DefaultRouterABIPath = "fixtures/abi/Router.json"
 )
 
 type Router interface {

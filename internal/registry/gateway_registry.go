@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	GatewayRegistryABIPath = "../../fixtures/abi/GatewayRegistry.json"
+	GatewayRegistryABIPath = "fixtures/abi/GatewayRegistry.json"
 )
 
 // Gateway represents the structure of a gateway in the registry

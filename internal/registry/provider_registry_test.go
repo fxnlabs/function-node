@@ -18,8 +18,6 @@ import (
 	"go.uber.org/zap"
 )
 
-const ProviderRegistryABIPath = "../../fixtures/abi/ProviderRegistry.json"
-
 func TestNewProviderRegistry(t *testing.T) {
 	cfg := &config.Config{}
 	cfg.Registry.Provider.PollInterval = 1 * time.Second

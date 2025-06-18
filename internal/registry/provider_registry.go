@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const ProviderRegistryABIPath = "fixtures/abi/ProviderRegistry.json"
+
 // Provider represents the structure of a provider in the registry.
 type Provider struct {
 	Owner        common.Address `json:"owner"`
@@ -35,8 +37,7 @@ func NewProviderRegistry(
 ) (*CachedRegistry, error) {
 	var parsedABI abi.ABI
 	var err error
-
-	abiBytes, err := os.ReadFile("../../fixtures/abi/ProviderRegistry.json") // Adjust path if necessary
+	abiBytes, err := os.ReadFile(ProviderRegistryABIPath) // Adjust path if necessary
 	if err != nil {
 		return nil, fmt.Errorf("failed to read ProviderRegistry ABI file: %w", err)
 	}

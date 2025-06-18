@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math/big"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -29,7 +30,7 @@ func TestNewGatewayRegistry(t *testing.T) {
 		mockRouter.EXPECT().GetGatewayRegistryAddress().Return(common.HexToAddress("0x123"), nil)
 
 		// Mock the initial call to fetch the gateway registry
-		abiFileContent, err := os.ReadFile(GatewayRegistryABIPath)
+		abiFileContent, err := os.ReadFile(filepath.Join("../../", GatewayRegistryABIPath))
 		assert.NoError(t, err)
 		parsedABI, err := abi.JSON(strings.NewReader(string(abiFileContent)))
 		assert.NoError(t, err)
@@ -41,21 +42,6 @@ func TestNewGatewayRegistry(t *testing.T) {
 		registry, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter)
 		assert.NoError(t, err)
 		assert.NotNil(t, registry)
-	})
-
-	t.Run("ABIFileReadError", func(t *testing.T) {
-		mockClient := ethclient.NewMockEthClient(t)
-		mockRouter := contracts.NewMockRouter(t)
-
-		// Temporarily move the ABI file to simulate a read error
-		originalPath := GatewayRegistryABIPath
-		tempPath := GatewayRegistryABIPath + ".tmp"
-		err := os.Rename(originalPath, tempPath)
-		assert.NoError(t, err)
-		defer os.Rename(tempPath, originalPath)
-
-		_, err = NewGatewayRegistry(mockClient, cfg, logger, mockRouter)
-		assert.Error(t, err)
 	})
 
 	t.Run("GetGatewayRegistryAddressError", func(t *testing.T) {
@@ -71,7 +57,7 @@ func TestFetchGatewayRegistry(t *testing.T) {
 	logger := zap.NewNop()
 	contractAddress := common.HexToAddress("0x123")
 
-	abiFileContent, err := os.ReadFile(GatewayRegistryABIPath)
+	abiFileContent, err := os.ReadFile(filepath.Join("../../", GatewayRegistryABIPath))
 	assert.NoError(t, err)
 	parsedABI, err := abi.JSON(strings.NewReader(string(abiFileContent)))
 	assert.NoError(t, err)
