@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 
-	mocks "github.com/fxnlabs/function-node/mocks/contracts"
+	mocks "github.com/fxnlabs/function-node/mocks/ethclient"
 )
 
 func TestNewRouter(t *testing.T) {

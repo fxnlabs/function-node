@@ -6,7 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
@@ -16,13 +16,13 @@ type Registry interface {
 }
 
 // FetchFunc defines the signature for functions that fetch registry data.
-type FetchFunc func(client *ethclient.Client, contractAddress common.Address, contractABI abi.ABI, logger *zap.Logger) (map[string]interface{}, error)
+type FetchFunc func(client ethclient.EthClient, contractAddress common.Address, contractABI abi.ABI, logger *zap.Logger) (map[string]interface{}, error)
 
 // CachedRegistry provides a generic caching mechanism for registry data.
 type CachedRegistry struct {
 	mu              sync.RWMutex
 	cache           map[string]interface{}
-	client          *ethclient.Client
+	client          ethclient.EthClient
 	contractAddress common.Address
 	contractABI     abi.ABI
 	fetchFunc       FetchFunc
@@ -32,7 +32,7 @@ type CachedRegistry struct {
 
 // NewCachedRegistry creates and starts a new cached registry.
 func NewCachedRegistry(
-	client *ethclient.Client,
+	client ethclient.EthClient,
 	contractAddress common.Address,
 	contractABI abi.ABI,
 	fetchFunc FetchFunc,

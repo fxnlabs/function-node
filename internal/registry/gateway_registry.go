@@ -10,9 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
+	"github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +27,7 @@ type Gateway struct {
 
 // NewGatewayRegistry creates a new cached registry for gateways.
 func NewGatewayRegistry(
-	client *ethclient.Client,
+	client ethclient.EthClient,
 	cfg *config.Config,
 	logger *zap.Logger,
 	router *contracts.Router,
@@ -64,7 +64,7 @@ func NewGatewayRegistry(
 // fetchGatewayRegistry implements the FetchFunc signature.
 // It uses the provided client, contractAddress, and contractABI.
 func fetchGatewayRegistry(
-	client *ethclient.Client,
+	client ethclient.EthClient,
 	contractAddress common.Address,
 	contractABI abi.ABI,
 	logger *zap.Logger,

@@ -5,14 +5,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/config"
+	"github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
 // NewSchedulerRegistry creates a new cached registry for schedulers.
 func NewSchedulerRegistry(
-	client *ethclient.Client,
+	client ethclient.EthClient,
 	cfg *config.Config,
 	logger *zap.Logger,
 ) (*CachedRegistry, error) {
@@ -43,7 +43,7 @@ func NewSchedulerRegistry(
 // For now, it simply returns the configured scheduler address.
 // If schedulers are dynamically registered on-chain, this function would query the contract.
 func fetchSchedulerRegistry(
-	_ *ethclient.Client, // Client might not be used if just returning configured value
+	_ ethclient.EthClient, // Client might not be used if just returning configured value
 	contractAddress common.Address,
 	_ abi.ABI, // ABI might not be used for this simple case
 	logger *zap.Logger,

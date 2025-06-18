@@ -10,9 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
+	"github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +28,7 @@ type Provider struct {
 
 // NewProviderRegistry creates a new cached registry for providers.
 func NewProviderRegistry(
-	client *ethclient.Client,
+	client ethclient.EthClient,
 	cfg *config.Config,
 	logger *zap.Logger,
 	router *contracts.Router,
@@ -69,7 +69,7 @@ func NewProviderRegistry(
 
 // fetchProviderRegistry implements FetchFunc to fetch provider data from the smart contract.
 func fetchProviderRegistry(
-	client *ethclient.Client,
+	client ethclient.EthClient,
 	contractAddress common.Address,
 	contractABI abi.ABI,
 	logger *zap.Logger,
