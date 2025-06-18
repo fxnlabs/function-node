@@ -239,7 +239,7 @@ func TestAuthMiddleware(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, rr.Code)
 	})
 
-	t.Run("invalid signature", func(t *testing.T) {
+	t.Run("invalidated signature", func(t *testing.T) {
 		body := []byte(`{"hello":"world"}`)
 		timestamp := fmt.Sprintf("%d", time.Now().Unix())
 		nonce := "test-nonce-invalid-sig"
@@ -263,7 +263,7 @@ func TestAuthMiddleware(t *testing.T) {
 		rr := httptest.NewRecorder()
 		authHandler.ServeHTTP(rr, req)
 
-		assert.Equal(t, http.StatusInternalServerError, rr.Code)
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
 	})
 
 	t.Run("verify signature error", func(t *testing.T) {

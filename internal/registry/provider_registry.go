@@ -19,8 +19,8 @@ import (
 // Provider represents the structure of a provider in the registry.
 type Provider struct {
 	Owner        common.Address `json:"owner"`
-	ID           []byte         `json:"id"` // Keep as bytes, convert to hex string for map key
-	ModelID      *big.Int       `json:"modelId"`
+	Id           []byte         `json:"id"` // Keep as bytes, convert to hex string for map key
+	ModelId      *big.Int       `json:"modelId"`
 	RegisteredAt *big.Int       `json:"registeredAt"`
 	Metadata     string         `json:"metadata"`
 	Paused       bool           `json:"paused"`
@@ -36,7 +36,7 @@ func NewProviderRegistry(
 	var parsedABI abi.ABI
 	var err error
 
-	abiBytes, err := os.ReadFile("fixtures/abi/ProviderRegistry.json") // Adjust path if necessary
+	abiBytes, err := os.ReadFile("../../fixtures/abi/ProviderRegistry.json") // Adjust path if necessary
 	if err != nil {
 		return nil, fmt.Errorf("failed to read ProviderRegistry ABI file: %w", err)
 	}
@@ -105,8 +105,8 @@ func fetchProviderRegistry(
 		// This can happen if the output is defined as `tuple[]` and contains anonymous structs
 		var rawProviders []struct {
 			Owner        common.Address `json:"owner"`
-			ID           []byte         `json:"id"`
-			ModelID      *big.Int       `json:"modelId"`
+			Id           []byte         `json:"id"`
+			ModelId      *big.Int       `json:"modelId"`
 			RegisteredAt *big.Int       `json:"registeredAt"`
 			Metadata     string         `json:"metadata"`
 			Paused       bool           `json:"paused"`
@@ -129,11 +129,8 @@ func fetchProviderRegistry(
 	// Convert to the required map format
 	registryData := make(map[string]interface{})
 	for _, provider := range providers {
-		providerIDHex := common.Bytes2Hex(provider.ID)
-		// Ensure the ID is prefixed with "0x" if it's not already, for consistency.
-		// common.Bytes2Hex does not add "0x" prefix.
-		registryData["0x"+providerIDHex] = provider
-		logger.Debug("Fetched provider", zap.String("id", "0x"+providerIDHex), zap.String("owner", provider.Owner.Hex()))
+		registryData[string(provider.Id)] = provider
+		logger.Debug("Fetched provider", zap.String("id", string(provider.Id)), zap.String("owner", provider.Owner.Hex()))
 	}
 
 	logger.Info("Successfully fetched and processed provider registry", zap.Int("provider_count", len(providers)))
