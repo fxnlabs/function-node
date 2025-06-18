@@ -305,6 +305,20 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 		assert.Nil(t, resMap["gpuStats"])
 	})
 
+	t.Run("get gpu stats error with parse error", func(t *testing.T) {
+		mockExec := new(mocks.MockExecutor)
+		mockExec.On("Command", "system_profiler", "SPDisplaysDataType").Return(exec.Command("echo", "Chipset Model: Test GPU\nVRAM (Total): invalid"))
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("echo", "14.0"))
+		challenger := &IdentityChallenger{
+			privateKey: privateKey,
+			Client:     mockClient,
+			exec:       mockExec,
+		}
+		challenger.goos = "darwin"
+		_, err := challenger.getGPUStats(log)
+		assert.Error(t, err)
+	})
+
 	t.Run("get gpu stats error linux", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
 		mockExec.On("Command", "nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits").Return(exec.Command("false"))
