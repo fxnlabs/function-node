@@ -41,7 +41,7 @@ func TestNewGatewayRegistry(t *testing.T) {
 		assert.NoError(t, err)
 		mockClient.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).Return(packedOutput, nil)
 
-		registry, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter, providerABIPath)
+		registry, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter, gatewayABIPath)
 		assert.NoError(t, err)
 		assert.NotNil(t, registry)
 	})
@@ -50,7 +50,7 @@ func TestNewGatewayRegistry(t *testing.T) {
 		mockClient := ethclient.NewMockEthClient(t)
 		mockRouter := contracts.NewMockRouter(t)
 		mockRouter.EXPECT().GetGatewayRegistryAddress().Return(common.Address{}, errors.New("router error"))
-		_, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter, providerABIPath)
+		_, err := NewGatewayRegistry(mockClient, cfg, logger, mockRouter, gatewayABIPath)
 		assert.Error(t, err)
 	})
 }
