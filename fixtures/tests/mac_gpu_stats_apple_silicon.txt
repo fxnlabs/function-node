@@ -1,0 +1,2 @@
+Chipset Model: Apple M1
+VRAM (Total): 8 GB

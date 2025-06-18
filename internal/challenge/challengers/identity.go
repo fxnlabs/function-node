@@ -355,9 +355,21 @@ func parseNvidiaGPUStats(output []byte, log *zap.Logger) ([]GPUStat, error) {
 
 func parseAmdGPUStats(output []byte, log *zap.Logger) ([]GPUStat, error) {
 	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(lines) == 0 || (len(lines) == 1 && lines[0] == "") {
+		return []GPUStat{}, nil
+	}
 	var stats []GPUStat
-	// rocm-smi output has a header, so we skip it.
-	for _, line := range lines[1:] {
+
+	startLine := 0
+	// Heuristically check for a header line. If the memory field isn't a number, it's probably a header.
+	firstLineValues := strings.Split(lines[0], ",")
+	if len(firstLineValues) >= 4 {
+		if _, err := strconv.Atoi(strings.TrimSpace(firstLineValues[2])); err != nil {
+			startLine = 1
+		}
+	}
+
+	for _, line := range lines[startLine:] {
 		values := strings.Split(line, ",")
 		if len(values) < 4 {
 			log.Warn("Unexpected rocm-smi format", zap.String("line", line))
@@ -366,7 +378,7 @@ func parseAmdGPUStats(output []byte, log *zap.Logger) ([]GPUStat, error) {
 		total, _ := strconv.Atoi(strings.TrimSpace(values[2]))
 		used, _ := strconv.Atoi(strings.TrimSpace(values[3]))
 		gpuStat := GPUStat{
-			Name:          values[1],
+			Name:          strings.TrimSpace(values[1]),
 			DriverVersion: "N/A",
 			VRAMTotalMB:   total,
 			VRAMUsedMB:    used,

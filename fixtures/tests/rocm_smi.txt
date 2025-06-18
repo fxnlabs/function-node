@@ -1,2 +1,1 @@
-card, name, vram_total, vram_used
-card0,Radeon RX 6800,16384,1024
+card0, Radeon RX 6800, 16384, 1024

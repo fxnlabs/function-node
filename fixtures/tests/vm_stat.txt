@@ -1,2 +1,1 @@
-page size of 4096 bytes
 Pages free: 200.

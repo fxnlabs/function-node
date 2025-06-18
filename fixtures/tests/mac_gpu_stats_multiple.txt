@@ -1,0 +1,4 @@
+Chipset Model: Intel Iris Pro
+VRAM (Total): 1536 MB
+Chipset Model: NVIDIA GeForce GT 750M
+VRAM (Total): 2 GB
