@@ -48,27 +48,34 @@ This command is a helper to help SHA256 and send a request to your node for test
     export PRIVATE_KEY=your_private_key_here
     ```
 
-    or 
-
-    ```bash
-    export PRIVATE_KEY=$(jq -r .private_key scripts/gateway_test_key.json)
-    export PRIVATE_KEY=$(jq -r .private_key scripts/scheduler_test_key.json)
-    ```
-
 2.  **Run the command:**
 
-    The command takes two arguments: the request type (`gateway` or `challenge`) and the request body.
+    The command takes two arguments: the endpoint and the request body.
+
+    
 
     **Gateway Request Examples:**
 
     For gateway requests, you'll typically be calling the OpenAI proxy endpoints.
 
+    The private key for test gateway is available in `scripts/gateway_test_key.json`.
+
+    ```bash
+    export PRIVATE_KEY=$(jq -r .private_key scripts/gateway_test_key.json)
+    ```
+
     ```bash
     # Chat Completions
-    go run cmd/send_request/main.go gateway '{"model": "gpt-3.5-turbo", "messages": [{"role": "user", "content": "Hello!"}]}'
+    go run cmd/send_request/main.go /v1/chat/completions '{"model": "meta/llama-4-scout-17b-16e-instruct", "messages": [{"role": "user", "content": "Hello!"}]}'
 
     # Embeddings
-    go run cmd/send_request/main.go gateway '{"model": "text-embedding-ada-002", "input": "The quick brown fox jumped over the lazy dog"}'
+    go run cmd/send_request/main.go /v1/embeddings '{"model": "meta/llama-4-scout-17b-16e-instruct", "input": "The quick brown fox jumped over the lazy dog"}'
+
+    # Completions
+    go run cmd/send_request/main.go /v1/completions '{"model": "meta/llama-4-scout-17b-16e-instruct", "prompt": "Once upon a time"}'
+
+    # Models
+    go run cmd/send_request/main.go /v1/models '{}'
     ```
 
     **Challenge Request Examples:**
@@ -81,15 +88,15 @@ This command is a helper to help SHA256 and send a request to your node for test
 
     **Identity Challenge:**
     ```bash
-    go run cmd/send_request/main.go challenge '{"type": "IDENTITY", "payload": {}}'
+    go run cmd/send_request/main.go /challenge '{"type": "IDENTITY", "payload": {}}'
     ```
 
     **Matrix Multiplication Challenge:**
     ```bash
-    go run cmd/send_request/main.go challenge '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
+    go run cmd/send_request/main.go /challenge '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
     ```
 
     **Endpoint Reachable Challenge:**
     ```bash
-    go run cmd/send_request/main.go challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
-    ``
+    go run cmd/send_request/main.go /challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
+    ```

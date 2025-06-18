@@ -18,23 +18,17 @@ func main() {
 	}
 
 	if len(os.Args) != 3 {
-		fmt.Printf("Usage: %s <challenge|gateway> <request_body>\n", os.Args[0])
+		fmt.Printf("Usage: %s <endpoint> <request_body>\n\n", os.Args[0])
+		fmt.Println("Example: go run cmd/send_request/main.go /v1/chat/completions '{\"model\":\"gpt-3.5-turbo\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello!\"}]}'")
 		os.Exit(1)
 	}
 
-	requestType := os.Args[1]
+	endpoint := os.Args[1]
+	if !strings.HasPrefix(endpoint, "/") {
+		endpoint = "/" + endpoint
+	}
 	requestBody := os.Args[2]
-	var url string
-
-	switch strings.ToLower(requestType) {
-	case "challenge":
-		url = "http://localhost:8080/challenge"
-	case "gateway":
-		url = "http://localhost:8080/gateway"
-	default:
-		fmt.Printf("Invalid request type: %s. Must be 'challenge' or 'gateway'.\n", requestType)
-		os.Exit(1)
-	}
+	url := "http://localhost:8080" + endpoint
 
 	httpClient := &http.Client{}
 	client, err := fxnclient.NewFxnClient(privateKeyHex, httpClient)

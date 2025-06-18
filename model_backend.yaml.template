@@ -2,8 +2,10 @@
 # It allows node operators to configure specific models and point them to different URLs (backends).
 
 models:
-  "default":
-    url: "http://localhost:8081"
+  "meta/llama-4-scout-17b-16e-instruct":
+    url: "https://api.function.network"
+    auth:
+      bearer_token: "api_key"
   # "gpt-4":
   #   url: "http://another-backend:8082"
   #   auth:
