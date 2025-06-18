@@ -32,6 +32,11 @@ func TestNewRouter(t *testing.T) {
 		_, err := NewRouter(mockClient, contractAddress, logger, "../../fixtures/tests/invalid_abi.json")
 		assert.Error(t, err)
 	})
+
+	t.Run("ABI file not found", func(t *testing.T) {
+		_, err := NewRouter(mockClient, contractAddress, logger, "nonexistent.json")
+		assert.Error(t, err)
+	})
 }
 
 func TestRouter_getAddress(t *testing.T) {
@@ -76,6 +81,11 @@ func TestRouter_getAddress(t *testing.T) {
 		_, err := router.getAddress(methodName)
 		assert.Error(t, err)
 		mockClient.AssertExpectations(t)
+	})
+
+	t.Run("pack error", func(t *testing.T) {
+		_, err := router.getAddress("nonexistentMethod")
+		assert.Error(t, err)
 	})
 }
 

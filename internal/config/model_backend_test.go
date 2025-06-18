@@ -94,8 +94,33 @@ func TestGetModelBackend(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("default model not in config", func(t *testing.T) {
+		configWithoutDefault := &ModelBackendConfig{
+			Models: map[string]ModelBackend{
+				"meta/llama-4-scout-17b-16e-instruct": {
+					URL: "http://llama-backend.com",
+				},
+			},
+		}
+		body := `{"model": "default"}`
+		req, err := http.NewRequest("POST", "/", bytes.NewBufferString(body))
+		require.NoError(t, err)
+
+		_, err = configWithoutDefault.GetModelBackend(req, log)
+		assert.Error(t, err)
+	})
+
 	t.Run("no request body", func(t *testing.T) {
 		req, err := http.NewRequest("POST", "/", nil)
+		require.NoError(t, err)
+
+		_, err = config.GetModelBackend(req, log)
+		assert.Error(t, err)
+	})
+
+	t.Run("error reading request body", func(t *testing.T) {
+		errorReader := &errorReader{}
+		req, err := http.NewRequest("POST", "/", errorReader)
 		require.NoError(t, err)
 
 		_, err = config.GetModelBackend(req, log)
@@ -126,4 +151,10 @@ func TestGetModelBackend(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, body, string(bodyBytes))
 	})
+}
+
+type errorReader struct{}
+
+func (r *errorReader) Read(p []byte) (n int, err error) {
+	return 0, assert.AnError
 }
