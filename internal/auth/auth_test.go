@@ -19,6 +19,7 @@ import (
 	"go.uber.org/zap"
 
 	mocks "github.com/fxnlabs/function-node/mocks/registry"
+	"github.com/fxnlabs/function-node/pkg/fxnclient"
 )
 
 func TestNonceCache(t *testing.T) {
@@ -61,18 +62,18 @@ func TestAuthenticateChallenge(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test case 1: Valid signature
-	valid, err := AuthenticateChallenge(signature, hash.Bytes(), address)
+	valid, err := fxnclient.VerifySignature(signature, hash.Bytes(), address)
 	assert.NoError(t, err)
 	assert.True(t, valid, "Signature should be valid")
 
 	// Test case 2: Invalid signature
 	invalidSignature := []byte("invalid signature")
-	valid, err = AuthenticateChallenge(invalidSignature, hash.Bytes(), address)
+	valid, err = fxnclient.VerifySignature(invalidSignature, hash.Bytes(), address)
 	assert.Error(t, err)
 	assert.False(t, valid, "Signature should be invalid")
 
 	// Test case 3: Wrong address
-	valid, err = AuthenticateChallenge(signature, hash.Bytes(), "0x0000000000000000000000000000000000000000")
+	valid, err = fxnclient.VerifySignature(signature, hash.Bytes(), "0x0000000000000000000000000000000000000000")
 	assert.NoError(t, err)
 	assert.False(t, valid, "Signature should be invalid for wrong address")
 }

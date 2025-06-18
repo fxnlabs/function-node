@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
 	"go.uber.org/zap"
 
 	"github.com/fxnlabs/function-node/internal/registry"
+	"github.com/fxnlabs/function-node/pkg/fxnclient"
 )
 
 type NonceCache struct {
@@ -58,24 +58,6 @@ func (c *NonceCache) Use(nonce string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.nonces[nonce] = time.Now()
-}
-
-// AuthenticateChallenge verifies a signature against a message and an address.
-func AuthenticateChallenge(signature, message []byte, address string) (bool, error) {
-	if len(signature) == 65 {
-		// EIP-155 replay protection, v is 27 or 28
-		if signature[64] == 27 || signature[64] == 28 {
-			signature[64] -= 27
-		}
-	}
-
-	sigPublicKey, err := crypto.SigToPub(message, signature)
-	if err != nil {
-		return false, err
-	}
-
-	recoveredAddress := crypto.PubkeyToAddress(*sigPublicKey).Hex()
-	return recoveredAddress == address, nil
 }
 
 func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, reg registry.Registry) http.Handler {
@@ -138,9 +120,9 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 
 		bodyHash := sha256.Sum256(bodyBytes)
 		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestampStr, nonce)
-		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+		messageHash := fxnclient.EIP191Hash(messageStr)
 
-		valid, err := AuthenticateChallenge(signature, messageHash, address)
+		valid, err := fxnclient.VerifySignature(signature, messageHash, address)
 		if err != nil {
 			log.Error("failed to authenticate request", zap.Error(err))
 			http.Error(w, "internal server error", http.StatusInternalServerError)
