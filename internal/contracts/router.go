@@ -3,25 +3,30 @@ package contracts
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"go.uber.org/zap"
 )
 
+// EthClient is an interface that matches the methods we use from ethclient.Client
+type EthClient interface {
+	CallContract(ctx context.Context, msg ethereum.CallMsg, blockNumber *big.Int) ([]byte, error)
+}
+
 type Router struct {
-	client          *ethclient.Client
+	client          EthClient
 	contractAddress common.Address
 	contractABI     abi.ABI
 	logger          *zap.Logger
 }
 
-func NewRouter(client *ethclient.Client, contractAddress common.Address, logger *zap.Logger) (*Router, error) {
-	abiBytes, err := os.ReadFile("fixtures/abi/Router.json")
+func NewRouter(client EthClient, contractAddress common.Address, logger *zap.Logger) (*Router, error) {
+	abiBytes, err := os.ReadFile("../../fixtures/abi/Router.json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to read Router ABI file: %w", err)
 	}
