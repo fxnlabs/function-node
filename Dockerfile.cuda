@@ -1,0 +1,65 @@
+# CUDA development build stage
+FROM nvidia/cuda:12.2.0-devel-ubuntu22.04 AS builder
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    g++ \
+    make \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Go 1.23
+RUN curl -L https://go.dev/dl/go1.23.0.linux-amd64.tar.gz | tar -xz -C /usr/local
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV GOPATH="/go"
+ENV PATH="${GOPATH}/bin:${PATH}"
+
+# Set CUDA environment variables
+ENV CUDA_HOME="/usr/local/cuda"
+ENV PATH="${CUDA_HOME}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
+ENV CGO_ENABLED=1
+ENV CGO_CFLAGS="-I${CUDA_HOME}/include"
+ENV CGO_LDFLAGS="-L${CUDA_HOME}/lib64 -lcuda -lcudart -lcublas"
+
+WORKDIR /app
+
+# Copy go mod files first for better caching
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
+COPY . .
+
+# Build CUDA library first
+RUN cd cuda && make install-local
+
+# Add CUDA library path to CGO flags
+ENV CGO_LDFLAGS="-L${CUDA_HOME}/lib64 -L./cuda/lib -lcuda -lcudart -lcublas"
+ENV LD_LIBRARY_PATH="./cuda/lib:${CUDA_HOME}/lib64:${LD_LIBRARY_PATH}"
+
+# Build with CUDA support
+RUN go build -tags cuda -o fxn github.com/fxnlabs/function-node/cmd/fxn
+
+# Runtime stage
+FROM nvidia/cuda:12.2.0-runtime-ubuntu22.04
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy binary and necessary files from builder
+COPY --from=builder /app/fxn .
+COPY --from=builder /app/fixtures/abi ./fixtures/abi
+COPY --from=builder /app/cuda/lib ./cuda/lib
+
+# Set CUDA library path to include our custom library
+ENV LD_LIBRARY_PATH="./cuda/lib:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
+
+CMD ["./fxn"]

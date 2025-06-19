@@ -25,7 +25,7 @@ type Challenge struct {
 func NewChallenger(challengeType string, privateKey *ecdsa.PrivateKey) (Challenger, error) {
 	switch challengeType {
 	case "MATRIX_MULTIPLICATION":
-		return &challengers.MatrixMultiplicationChallenger{}, nil
+		return challengers.NewMatrixMultiplicationChallenger(), nil
 	case "ENDPOINT_REACHABLE":
 		return challengers.NewEndpointReachableChallenger(), nil
 	case "IDENTITY":

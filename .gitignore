@@ -50,3 +50,14 @@ model_backend.yaml
 /keystore
 nodekey
 nodekey.json
+
+# direnv
+.direnv
+.envrc.private
+
+# CUDA build artifacts
+cuda/*.o
+cuda/*.a
+*.cubin
+*.fatbin
+*.ptx

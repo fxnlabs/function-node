@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  function-node-cuda:
+    build:
+      context: .
+      dockerfile: Dockerfile.cuda
+    command: ["./fxn", "start"]
+    volumes:
+      - ./config.yaml:/app/config.yaml
+      - ./nodekey.json:/app/nodekey.json
+      - ./model_backend.yaml:/app/model_backend.yaml
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    runtime: nvidia
