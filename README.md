@@ -18,12 +18,20 @@ The Function Node is the core software for providers on the Function Network, a 
     Create a new account (keypair) for your node.
 
     ```bash
-    go run cmd/cli/main.go accounts new
+    go run cmd/cli/main.go account new
     ```
 
-    This will output your node private key and address.
+3.  *Register node into the network using the address**
 
-3.  **Run the Node:**
+    Create a new account (keypair) for your node.
+
+    ```bash
+    go run cmd/cli/main.go account get
+    ```
+
+    This will output your node address.
+
+4.  **Run the Node:**
 
     Start the node software.
 
