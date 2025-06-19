@@ -15,7 +15,7 @@ import (
 
 func TestLoadModelBackendConfig(t *testing.T) {
 	t.Run("valid config", func(t *testing.T) {
-		config, err := LoadModelBackendConfig("../../fixtures/tests/model_backend.yaml")
+		config, err := LoadModelBackendConfig("../../fixtures/tests/config/model_backend.yaml")
 		require.NoError(t, err)
 		require.NotNil(t, config)
 
@@ -55,7 +55,7 @@ func TestLoadModelBackendConfig(t *testing.T) {
 
 func TestGetModelBackend(t *testing.T) {
 	log := zap.NewNop()
-	config, err := LoadModelBackendConfig("../../fixtures/tests/model_backend.yaml")
+	config, err := LoadModelBackendConfig("../../fixtures/tests/config/model_backend.yaml")
 	require.NoError(t, err)
 
 	t.Run("valid model in request", func(t *testing.T) {

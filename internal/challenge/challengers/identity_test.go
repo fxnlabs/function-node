@@ -50,10 +50,10 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 
 	t.Run("default", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "system_profiler", "SPDisplaysDataType").Return(exec.Command("cat", "../../../fixtures/tests/system_profiler_SPDisplaysDataType.txt"))
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		mockExec.On("Command", "system_profiler", "SPDisplaysDataType").Return(exec.Command("cat", "../../../fixtures/tests/challenge/system_profiler_SPDisplaysDataType.txt"))
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -121,10 +121,10 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 			D: new(big.Int),
 		}
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "system_profiler", "SPDisplaysDataType").Return(exec.Command("cat", "../../../fixtures/tests/system_profiler_SPDisplaysDataType.txt"))
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		mockExec.On("Command", "system_profiler", "SPDisplaysDataType").Return(exec.Command("cat", "../../../fixtures/tests/challenge/system_profiler_SPDisplaysDataType.txt"))
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -157,7 +157,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	t.Run("get gpu stats error with parse error", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
 		mockExec.On("Command", "system_profiler", "SPDisplaysDataType").Return(exec.Command("echo", "Chipset Model: Test GPU\nVRAM (Total): invalid"))
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
 		challenger := &IdentityChallenger{
 			privateKey: privateKey,
 			Client:     mockClient,
@@ -232,7 +232,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 
 	t.Run("getNvidiaGPUStats success", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
-		expectedOutput, err := os.ReadFile("../../../fixtures/tests/nvidia_smi.txt")
+		expectedOutput, err := os.ReadFile("../../../fixtures/tests/challenge/nvidia_smi.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits").Return(exec.Command("echo", string(expectedOutput)))
 		challenger := &IdentityChallenger{
@@ -299,7 +299,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 
 	t.Run("getAmdGPUStats success", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
-		expectedOutput, err := os.ReadFile("../../../fixtures/tests/rocm_smi.txt")
+		expectedOutput, err := os.ReadFile("../../../fixtures/tests/challenge/rocm_smi.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "rocm-smi", "--showproductname", "--showdriverversion", "--showmeminfo", "all", "--csv").Return(exec.Command("echo", string(expectedOutput)))
 		challenger := &IdentityChallenger{
@@ -361,7 +361,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseNvidiaGPUStats", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/nvidia_smi.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/nvidia_smi.txt")
 		require.NoError(t, err)
 		stats, err := parseNvidiaGPUStats(output, log)
 		assert.NoError(t, err)
@@ -377,7 +377,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseAmdGPUStats", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/rocm_smi.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/rocm_smi.txt")
 		require.NoError(t, err)
 		stats, err := parseAmdGPUStats(output, log)
 		assert.NoError(t, err)
@@ -409,12 +409,12 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseMacGPUStats", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/mac_gpu_stats.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/mac_gpu_stats.txt")
 		require.NoError(t, err)
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -429,9 +429,9 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	t.Run("parseMacGPUStats memory error", func(t *testing.T) {
 		output := []byte("Chipset Model: Apple M1\nVRAM (Total): invalid")
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -442,12 +442,12 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseMacGPUStats no driver version", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/mac_gpu_stats.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/mac_gpu_stats.txt")
 		require.NoError(t, err)
 		mockExec := new(mocks.MockExecutor)
 		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("false"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -462,9 +462,9 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	t.Run("parseMacGPUStats no vram", func(t *testing.T) {
 		output := []byte("Chipset Model: Apple M1")
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -542,7 +542,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	t.Run("getGPUStats linux fallback", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
 		mockExec.On("Command", "nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits").Return(exec.Command("false"))
-		rocmSmiOutput, err := os.ReadFile("../../../fixtures/tests/rocm_smi.txt")
+		rocmSmiOutput, err := os.ReadFile("../../../fixtures/tests/challenge/rocm_smi.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "rocm-smi", "--showproductname", "--showdriverversion", "--showmeminfo", "all", "--csv").Return(exec.Command("echo", string(rocmSmiOutput)))
 		challenger := &IdentityChallenger{
@@ -557,7 +557,7 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 
 	t.Run("getGPUStats unsupported os", func(t *testing.T) {
 		mockExec := new(mocks.MockExecutor)
-		nvidiaSmiOutput, err := os.ReadFile("../../../fixtures/tests/nvidia_smi.txt")
+		nvidiaSmiOutput, err := os.ReadFile("../../../fixtures/tests/challenge/nvidia_smi.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "nvidia-smi", "--query-gpu=name,driver_version,memory.total,memory.used,memory.free,utilization.gpu,utilization.memory", "--format=csv,noheader,nounits").Return(exec.Command("echo", string(nvidiaSmiOutput)))
 		challenger := &IdentityChallenger{
@@ -571,12 +571,12 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseMacGPUStats with apple silicon", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/mac_gpu_stats_apple_silicon.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/mac_gpu_stats_apple_silicon.txt")
 		require.NoError(t, err)
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -590,10 +590,10 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseMacGPUStats with multiple GPUs", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/mac_gpu_stats_multiple.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/mac_gpu_stats_multiple.txt")
 		require.NoError(t, err)
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
 		challenger := &IdentityChallenger{
 			exec: mockExec,
 		}
@@ -605,12 +605,12 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseMacGPUStats with getMacSystemMemory error", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/mac_gpu_stats.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/mac_gpu_stats.txt")
 		require.NoError(t, err)
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
 		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("false"))
-		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/vm_stat.txt")
+		vmStatOutput, err := os.ReadFile("../../../fixtures/tests/challenge/vm_stat.txt")
 		require.NoError(t, err)
 		mockExec.On("Command", "vm_stat").Return(exec.Command("echo", string(vmStatOutput)))
 		challenger := &IdentityChallenger{
@@ -623,11 +623,11 @@ func TestIdentityChallenger_Execute(t *testing.T) {
 	})
 
 	t.Run("parseMacGPUStats with getMacMemoryUsage error", func(t *testing.T) {
-		output, err := os.ReadFile("../../../fixtures/tests/mac_gpu_stats.txt")
+		output, err := os.ReadFile("../../../fixtures/tests/challenge/mac_gpu_stats.txt")
 		require.NoError(t, err)
 		mockExec := new(mocks.MockExecutor)
-		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/sw_vers_-productVersion.txt"))
-		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/sysctl_-n_hw.memsize.txt"))
+		mockExec.On("Command", "sw_vers", "-productVersion").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sw_vers_-productVersion.txt"))
+		mockExec.On("Command", "sysctl", "-n", "hw.memsize").Return(exec.Command("cat", "../../../fixtures/tests/challenge/sysctl_-n_hw.memsize.txt"))
 		mockExec.On("Command", "vm_stat").Return(exec.Command("false"))
 		challenger := &IdentityChallenger{
 			exec: mockExec,
