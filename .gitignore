@@ -61,3 +61,10 @@ cuda/*.a
 *.cubin
 *.fatbin
 *.ptx
+*.a
+*.o
+# Metal build artifacts
+*.metallib
+metal/lib/*.metallib
+metal/lib/*.a
+metal/obj/*.o

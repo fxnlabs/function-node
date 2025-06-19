@@ -36,7 +36,19 @@ func (m *Manager) detectAndInitialize() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Try CUDA first (only if build tag is enabled)
+	// Try Metal first on macOS (only if build tag is enabled)
+	if metalBackend := m.tryCreateMetalBackend(); metalBackend != nil {
+		if metalBackend.IsAvailable() {
+			if err := metalBackend.Initialize(); err == nil {
+				m.backend = metalBackend
+				return nil
+			}
+			// If initialization failed, try cleanup
+			_ = metalBackend.Cleanup()
+		}
+	}
+
+	// Try CUDA next (only if build tag is enabled)
 	if cudaBackend := m.tryCreateCUDABackend(); cudaBackend != nil {
 		if cudaBackend.IsAvailable() {
 			if err := cudaBackend.Initialize(); err == nil {
@@ -120,8 +132,13 @@ func (m *Manager) GetBackendType() string {
 		return "cpu"
 	}
 	
-	// If not CPU and GPU is available, it must be CUDA
-	if m.IsGPUAvailable() {
+	// Check if it's Metal backend
+	if _, isMetal := backend.(*MetalBackend); isMetal {
+		return "metal"
+	}
+	
+	// Check if it's CUDA backend
+	if _, isCUDA := backend.(*CUDABackend); isCUDA {
 		return "cuda"
 	}
 	

@@ -1,5 +1,5 @@
-//go:build cuda && !metal
-// +build cuda,!metal
+//go:build metal && cuda && darwin
+// +build metal,cuda,darwin
 
 package gpu
 
@@ -8,9 +8,16 @@ import (
 )
 
 // NewGPUBackend creates an appropriate GPU backend based on available hardware
-// It will try CUDA first, then fall back to CPU
+// When both Metal and CUDA are available, prefer Metal on macOS
 func NewGPUBackend(logger *slog.Logger) GPUBackend {
-	// Try CUDA backend first
+	// Try Metal backend first on macOS
+	metalBackend := NewMetalBackend(logger)
+	if metalBackend.IsAvailable() {
+		logger.Info("Using Metal GPU backend")
+		return metalBackend
+	}
+	
+	// Try CUDA backend next
 	cudaBackend := NewCUDABackend(logger)
 	if cudaBackend.IsAvailable() {
 		logger.Info("Using CUDA GPU backend")

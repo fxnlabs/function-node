@@ -15,6 +15,7 @@ The Function Node is the core software for providers on the Function Network, a 
 
 - Go 1.21 or higher
 - (Optional) NVIDIA GPU with CUDA 12.2+ for GPU challenge support
+- (Optional) Apple GPU (Metal) on macOS for GPU challenge support
 - (Optional) Docker with NVIDIA Container Toolkit for containerized GPU deployment
 - (Optional) [direnv](https://direnv.net/) for managing environment variables
 - Access to Ethereum RPC endpoint
@@ -56,6 +57,34 @@ The Function Node is the core software for providers on the Function Network, a 
     ```bash
     go run github.com/fxnlabs/function-node/cmd/fxn start
     ```
+
+## Building
+
+### CPU Only (Default)
+```bash
+make build
+# or
+go build -o fxn github.com/fxnlabs/function-node/cmd/fxn
+```
+
+### With CUDA Support
+```bash
+make cuda
+```
+
+### With Metal Support (macOS)
+```bash
+make metal
+```
+
+### Check GPU Availability
+```bash
+# Check CUDA
+make check-cuda
+
+# Check Metal (macOS)
+make check-metal
+```
 
 ## Implementation Details
 

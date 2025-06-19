@@ -100,18 +100,28 @@ send_challenge "Force CPU backend" '{
     }
 }'
 
-# Test 6: Backend selection - GPU
-echo -e "${YELLOW}=== Test 6: GPU Backend ===${NC}"
-send_challenge "Request GPU backend" '{
+# Test 6: Backend selection - CUDA GPU
+echo -e "${YELLOW}=== Test 6: CUDA GPU Backend ===${NC}"
+send_challenge "Request CUDA GPU backend" '{
     "type": "MATRIX_MULTIPLICATION",
     "payload": {
         "size": 50,
-        "backend": "gpu"
+        "backend": "cuda"
     }
 }'
 
-# Test 7: Backend selection - Auto
-echo -e "${YELLOW}=== Test 7: Auto Backend ===${NC}"
+# Test 7: Backend selection - Metal GPU
+echo -e "${YELLOW}=== Test 7: Metal GPU Backend ===${NC}"
+send_challenge "Request Metal GPU backend" '{
+    "type": "MATRIX_MULTIPLICATION",
+    "payload": {
+        "size": 50,
+        "backend": "metal"
+    }
+}'
+
+# Test 8: Backend selection - Auto
+echo -e "${YELLOW}=== Test 8: Auto Backend ===${NC}"
 send_challenge "Auto backend selection" '{
     "type": "MATRIX_MULTIPLICATION",
     "payload": {
@@ -120,8 +130,8 @@ send_challenge "Auto backend selection" '{
     }
 }'
 
-# Test 8: Rectangular matrices
-echo -e "${YELLOW}=== Test 8: Rectangular Matrices ===${NC}"
+# Test 9: Rectangular matrices
+echo -e "${YELLOW}=== Test 9: Rectangular Matrices ===${NC}"
 send_challenge "2x3 * 3x2 matrices" '{
     "type": "MATRIX_MULTIPLICATION",
     "payload": {
@@ -130,8 +140,8 @@ send_challenge "2x3 * 3x2 matrices" '{
     }
 }'
 
-# Test 9: Error case - incompatible dimensions
-echo -e "${YELLOW}=== Test 9: Error - Incompatible Dimensions ===${NC}"
+# Test 10: Error case - incompatible dimensions
+echo -e "${YELLOW}=== Test 10: Error - Incompatible Dimensions ===${NC}"
 send_challenge "Incompatible dimensions" '{
     "type": "MATRIX_MULTIPLICATION",
     "payload": {
@@ -140,43 +150,129 @@ send_challenge "Incompatible dimensions" '{
     }
 }'
 
-# Test 10: Error case - missing parameters
-echo -e "${YELLOW}=== Test 10: Error - Missing Parameters ===${NC}"
+# Test 11: Error case - missing parameters
+echo -e "${YELLOW}=== Test 11: Error - Missing Parameters ===${NC}"
 send_challenge "No matrices or size" '{
     "type": "MATRIX_MULTIPLICATION",
     "payload": {}
 }'
 
-# Performance test with different sizes
-echo -e "${YELLOW}=== Performance Test ===${NC}"
+# Backend comparison test
+echo -e "${YELLOW}=== Backend Comparison Test ===${NC}"
+echo "Testing different backends with various matrix sizes..."
+echo ""
+
+# Arrays to store results for comparison
+declare -A cpu_times
+declare -A cuda_times
+declare -A metal_times
+declare -A cpu_gflops
+declare -A cuda_gflops
+declare -A metal_gflops
+
 for size in 50 100 200 500; do
     echo -e "${YELLOW}Testing ${size}x${size} matrices...${NC}"
     
-    start_time=$(date +%s.%N)
-    
+    # Test CPU backend
+    echo -n "  CPU: "
     response=$(PRIVATE_KEY="$PRIVATE_KEY" go run "${SCRIPT_DIR}/../cmd/send_request/main.go" \
         -url "${BASE_URL}/challenge" \
-        -data "{\"type\": \"MATRIX_MULTIPLICATION\", \"payload\": {\"size\": $size}}" 2>&1)
-    
-    end_time=$(date +%s.%N)
-    total_time=$(echo "$end_time - $start_time" | bc)
+        -data "{\"type\": \"MATRIX_MULTIPLICATION\", \"payload\": {\"size\": $size, \"backend\": \"cpu\"}}" 2>&1)
     
     if [ $? -eq 0 ]; then
-        # Extract computation time and calculate GFLOPS
         comp_time=$(echo "$response" | jq -r '.result.computationTimeMs // 0')
         flops=$(echo "$response" | jq -r '.result.flops // 0')
-        backend=$(echo "$response" | jq -r '.result.backend // "unknown"')
-        
         if [ "$comp_time" != "0" ] && [ "$flops" != "0" ]; then
             gflops=$(echo "scale=2; $flops / ($comp_time / 1000) / 1000000000" | bc)
-            echo -e "${GREEN}✓ Size: ${size}x${size}, Backend: ${backend}, Computation: ${comp_time}ms, GFLOPS: ${gflops}, Total: ${total_time}s${NC}"
+            cpu_times[$size]=$comp_time
+            cpu_gflops[$size]=$gflops
+            echo -e "${GREEN}${comp_time}ms (${gflops} GFLOPS)${NC}"
         else
-            echo -e "${GREEN}✓ Size: ${size}x${size}, Total: ${total_time}s${NC}"
+            echo -e "${RED}Failed${NC}"
         fi
     else
-        echo -e "${RED}✗ Failed for size ${size}${NC}"
+        echo -e "${RED}Failed${NC}"
     fi
+    
+    # Test CUDA backend
+    echo -n "  CUDA: "
+    response=$(PRIVATE_KEY="$PRIVATE_KEY" go run "${SCRIPT_DIR}/../cmd/send_request/main.go" \
+        -url "${BASE_URL}/challenge" \
+        -data "{\"type\": \"MATRIX_MULTIPLICATION\", \"payload\": {\"size\": $size, \"backend\": \"cuda\"}}" 2>&1)
+    
+    if [ $? -eq 0 ]; then
+        comp_time=$(echo "$response" | jq -r '.result.computationTimeMs // 0')
+        flops=$(echo "$response" | jq -r '.result.flops // 0')
+        backend_used=$(echo "$response" | jq -r '.result.backend // ""')
+        
+        if [ "$backend_used" == "cpu" ]; then
+            echo -e "${YELLOW}Not available (fallback to CPU)${NC}"
+        elif [ "$comp_time" != "0" ] && [ "$flops" != "0" ]; then
+            gflops=$(echo "scale=2; $flops / ($comp_time / 1000) / 1000000000" | bc)
+            cuda_times[$size]=$comp_time
+            cuda_gflops[$size]=$gflops
+            speedup=$(echo "scale=2; ${cpu_times[$size]} / $comp_time" | bc 2>/dev/null || echo "N/A")
+            echo -e "${GREEN}${comp_time}ms (${gflops} GFLOPS, ${speedup}x speedup)${NC}"
+        else
+            echo -e "${RED}Failed${NC}"
+        fi
+    else
+        echo -e "${RED}Failed${NC}"
+    fi
+    
+    # Test Metal backend
+    echo -n "  Metal: "
+    response=$(PRIVATE_KEY="$PRIVATE_KEY" go run "${SCRIPT_DIR}/../cmd/send_request/main.go" \
+        -url "${BASE_URL}/challenge" \
+        -data "{\"type\": \"MATRIX_MULTIPLICATION\", \"payload\": {\"size\": $size, \"backend\": \"metal\"}}" 2>&1)
+    
+    if [ $? -eq 0 ]; then
+        comp_time=$(echo "$response" | jq -r '.result.computationTimeMs // 0')
+        flops=$(echo "$response" | jq -r '.result.flops // 0')
+        backend_used=$(echo "$response" | jq -r '.result.backend // ""')
+        
+        if [ "$backend_used" == "cpu" ]; then
+            echo -e "${YELLOW}Not available (fallback to CPU)${NC}"
+        elif [ "$comp_time" != "0" ] && [ "$flops" != "0" ]; then
+            gflops=$(echo "scale=2; $flops / ($comp_time / 1000) / 1000000000" | bc)
+            metal_times[$size]=$comp_time
+            metal_gflops[$size]=$gflops
+            speedup=$(echo "scale=2; ${cpu_times[$size]} / $comp_time" | bc 2>/dev/null || echo "N/A")
+            echo -e "${GREEN}${comp_time}ms (${gflops} GFLOPS, ${speedup}x speedup)${NC}"
+        else
+            echo -e "${RED}Failed${NC}"
+        fi
+    else
+        echo -e "${RED}Failed${NC}"
+    fi
+    
+    echo ""
 done
+
+# Print summary comparison table
+echo -e "${YELLOW}=== Performance Summary ===${NC}"
+echo "+--------+-------------+-------------+-------------+"
+echo "| Size   | CPU (ms)    | CUDA (ms)   | Metal (ms)  |"
+echo "+--------+-------------+-------------+-------------+"
+for size in 50 100 200 500; do
+    cpu_str="${cpu_times[$size]:-N/A}"
+    cuda_str="${cuda_times[$size]:-N/A}"
+    metal_str="${metal_times[$size]:-N/A}"
+    
+    # Add speedup info if available
+    if [ "${cuda_times[$size]}" != "" ] && [ "${cpu_times[$size]}" != "" ]; then
+        speedup=$(echo "scale=1; ${cpu_times[$size]} / ${cuda_times[$size]}" | bc 2>/dev/null)
+        cuda_str="${cuda_str} (${speedup}x)"
+    fi
+    
+    if [ "${metal_times[$size]}" != "" ] && [ "${cpu_times[$size]}" != "" ]; then
+        speedup=$(echo "scale=1; ${cpu_times[$size]} / ${metal_times[$size]}" | bc 2>/dev/null)
+        metal_str="${metal_str} (${speedup}x)"
+    fi
+    
+    printf "| %-6s | %-11s | %-11s | %-11s |\n" "$size" "$cpu_str" "$cuda_str" "$metal_str"
+done
+echo "+--------+-------------+-------------+-------------+"
 
 echo ""
 echo -e "${GREEN}Matrix multiplication challenge tests completed!${NC}"

@@ -86,7 +86,7 @@ func TestManager(t *testing.T) {
 	
 	// Test backend type
 	backendType := manager.GetBackendType()
-	if backendType != "cpu" && backendType != "cuda" {
+	if backendType != "cpu" && backendType != "cuda" && backendType != "metal" {
 		t.Errorf("Unexpected backend type: %s", backendType)
 	}
 	

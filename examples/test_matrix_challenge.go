@@ -72,6 +72,9 @@ func printBenchmarkTable(results []BenchmarkResult) {
 		sizeGroups[result.Size] = append(sizeGroups[result.Size], result)
 	}
 	
+	// Sort backends for consistent display order
+	backendOrder := []string{"CPU", "CUDA", "Metal"}
+	
 	for _, size := range []int{256, 512, 1024} {
 		if group, exists := sizeGroups[size]; exists {
 			var cpuTime time.Duration
@@ -84,26 +87,37 @@ func printBenchmarkTable(results []BenchmarkResult) {
 				}
 			}
 			
-			for i, result := range group {
-				var speedup string
-				if result.Backend == "CPU" {
-					speedup = "1.00x"
-				} else if cpuTime > 0 {
-					speedup = fmt.Sprintf("%.2fx", float64(cpuTime)/float64(result.Duration))
-				} else {
-					speedup = "N/A"
-				}
-				
-				if i == 0 {
-					fmt.Printf("│ %-8d │ %-12s │ %9.2f ms │ %9.2f    │ %-12s │\n",
-						result.Size, result.Backend, 
-						float64(result.Duration.Nanoseconds())/1e6,
-						result.GFLOPS, speedup)
-				} else {
-					fmt.Printf("│ %-8s │ %-12s │ %9.2f ms │ %9.2f    │ %-12s │\n",
-						"", result.Backend, 
-						float64(result.Duration.Nanoseconds())/1e6,
-						result.GFLOPS, speedup)
+			// Create a map for quick lookup
+			resultMap := make(map[string]BenchmarkResult)
+			for _, result := range group {
+				resultMap[result.Backend] = result
+			}
+			
+			// Display results in consistent order
+			displayed := false
+			for _, backend := range backendOrder {
+				if result, exists := resultMap[backend]; exists {
+					var speedup string
+					if result.Backend == "CPU" {
+						speedup = "1.00x"
+					} else if cpuTime > 0 {
+						speedup = fmt.Sprintf("%.2fx", float64(cpuTime)/float64(result.Duration))
+					} else {
+						speedup = "N/A"
+					}
+					
+					if !displayed {
+						fmt.Printf("│ %-8d │ %-12s │ %9.2f ms │ %9.2f    │ %-12s │\n",
+							result.Size, result.Backend, 
+							float64(result.Duration.Nanoseconds())/1e6,
+							result.GFLOPS, speedup)
+						displayed = true
+					} else {
+						fmt.Printf("│ %-8s │ %-12s │ %9.2f ms │ %9.2f    │ %-12s │\n",
+							"", result.Backend, 
+							float64(result.Duration.Nanoseconds())/1e6,
+							result.GFLOPS, speedup)
+					}
 				}
 			}
 			if size != 1024 {
@@ -147,9 +161,29 @@ func main() {
 			if gpu_info, exists := respMap["gpu_info"]; exists {
 				if gpuMap, ok := gpu_info.(map[string]interface{}); ok {
 					if available, ok := gpuMap["available"].(bool); ok && available {
-						fmt.Printf("✅ CUDA GPU Available: %s\n", gpuMap["device_name"])
-						fmt.Printf("   Compute Capability: %s\n", gpuMap["compute_capability"])
-						fmt.Printf("   Total Memory: %s\n", gpuMap["total_memory"])
+						// Check backend type
+						if backend, ok := gpuMap["backend"].(string); ok {
+							switch backend {
+							case "cuda":
+								fmt.Printf("✅ CUDA GPU Available: %s\n", gpuMap["device_name"])
+								fmt.Printf("   Compute Capability: %s\n", gpuMap["compute_capability"])
+								fmt.Printf("   Total Memory: %s\n", gpuMap["total_memory"])
+							case "metal":
+								fmt.Printf("✅ Metal GPU Available: %s\n", gpuMap["device_name"])
+								fmt.Printf("   Unified Memory: %v\n", gpuMap["has_unified_memory"])
+							case "metal_cuda":
+								fmt.Printf("✅ Multiple GPUs Available\n")
+								fmt.Printf("   CUDA: %s\n", gpuMap["device_name"])
+								fmt.Printf("   Metal: Available\n")
+							default:
+								fmt.Printf("✅ GPU Available: %s (Backend: %s)\n", gpuMap["device_name"], backend)
+							}
+						} else {
+							// Legacy CUDA-only response
+							fmt.Printf("✅ CUDA GPU Available: %s\n", gpuMap["device_name"])
+							fmt.Printf("   Compute Capability: %s\n", gpuMap["compute_capability"])
+							fmt.Printf("   Total Memory: %s\n", gpuMap["total_memory"])
+						}
 					} else {
 						fmt.Printf("⚠️  GPU acceleration not available - using CPU fallback\n")
 					}
@@ -199,11 +233,13 @@ func main() {
 			})
 		}
 		
-		// Test current backend (could be CUDA or CPU fallback)
+		// Detect backend type from manager
 		currentBackend := gpuManager.GetBackend()
-		if currentBackend != cpuBackend {
-			backendName := "CUDA"
-			fmt.Printf("  Running %s benchmark... ", backendName)
+		backendType := gpuManager.GetBackendType()
+		
+		// Test CUDA backend if available
+		if backendType == "cuda" || backendType == "metal_cuda" {
+			fmt.Printf("  Running CUDA benchmark... ")
 			gpuDuration, err := runBenchmark(currentBackend, size, iterations)
 			if err != nil {
 				fmt.Printf("❌ Error: %v\n", err)
@@ -211,11 +247,50 @@ func main() {
 				fmt.Printf("✅ %.2f ms\n", float64(gpuDuration.Nanoseconds())/1e6)
 				results = append(results, BenchmarkResult{
 					Size:     size,
-					Backend:  backendName,
+					Backend:  "CUDA",
 					Duration: gpuDuration,
 					GFLOPS:   calculateGFLOPS(size, gpuDuration),
 				})
 			}
+		}
+		
+		// Test Metal backend if available
+		if backendType == "metal" || backendType == "metal_cuda" {
+			// For metal_cuda, we need to test the Metal part separately
+			var metalBackend gpu.GPUBackend
+			if backendType == "metal_cuda" {
+				// Create a separate Metal backend for testing
+				metalBackend = gpu.NewMetalBackend(silentLogger)
+				if err := metalBackend.Initialize(); err != nil {
+					fmt.Printf("  Running Metal benchmark... ❌ Initialization failed: %v\n", err)
+					metalBackend = nil
+				}
+			} else {
+				metalBackend = currentBackend
+			}
+			
+			if metalBackend != nil {
+				fmt.Printf("  Running Metal benchmark... ")
+				metalDuration, err := runBenchmark(metalBackend, size, iterations)
+				if err != nil {
+					fmt.Printf("❌ Error: %v\n", err)
+				} else {
+					fmt.Printf("✅ %.2f ms\n", float64(metalDuration.Nanoseconds())/1e6)
+					results = append(results, BenchmarkResult{
+						Size:     size,
+						Backend:  "Metal",
+						Duration: metalDuration,
+						GFLOPS:   calculateGFLOPS(size, metalDuration),
+					})
+				}
+				
+				// Clean up if we created a separate Metal backend
+				if backendType == "metal_cuda" {
+					metalBackend.Cleanup()
+				}
+			}
+		} else if backendType == "cpu" {
+			fmt.Printf("  ⚠️  GPU acceleration not available - only CPU backend found\n")
 		}
 	}
 	
