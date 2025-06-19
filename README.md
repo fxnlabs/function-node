@@ -116,17 +116,13 @@ This command is a helper to help SHA256 and send a request to your node for test
     export PRIVATE_KEY=$(jq -r .private_key scripts/scheduler_test_key.json)
     ```
 
-    **Identity Challenge:**
     ```bash
+    # Identity Challenge
     go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "IDENTITY", "payload": {}}'
-    ```
 
-    **Matrix Multiplication Challenge:**
-    ```bash
+    # Matrix Multiplication Challenge
     go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
-    ```
 
-    **Endpoint Reachable Challenge:**
-    ```bash
+    # Endpoint Reachable Challenge
     go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
     ```
