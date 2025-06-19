@@ -27,6 +27,8 @@ func TestLoadConfig(t *testing.T) {
 		assert.Equal(t, "model_backend.yaml", config.ModelBackendPath)
 		assert.Equal(t, 1*time.Minute, config.NonceCache.TTL)
 		assert.Equal(t, 30*time.Second, config.NonceCache.CleanupInterval)
+		assert.Equal(t, 50, config.Proxy.MaxIdleConns)
+		assert.Equal(t, 60*time.Second, config.Proxy.IdleConnTimeout)
 	})
 
 	t.Run("non-existent file", func(t *testing.T) {

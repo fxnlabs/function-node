@@ -31,6 +31,10 @@ type Config struct {
 		TTL             time.Duration `yaml:"ttl"`
 		CleanupInterval time.Duration `yaml:"cleanupInterval"`
 	} `yaml:"nonceCache"`
+	Proxy struct {
+		MaxIdleConns    int           `yaml:"maxIdleConns"`
+		IdleConnTimeout time.Duration `yaml:"idleConnTimeout"`
+	} `yaml:"proxy"`
 }
 
 func LoadConfig(path string) (*Config, error) {

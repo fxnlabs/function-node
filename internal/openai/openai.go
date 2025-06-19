@@ -25,15 +25,22 @@ type ModelList struct {
 }
 
 // NewOAIProxyHandler creates a new http.HandlerFunc that proxies requests to the given backendURL.
-func NewOAIProxyHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
+func NewOAIProxyHandler(cfg *config.Config, modelBackendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
+	tr := &http.Transport{
+		MaxIdleConns:    cfg.Proxy.MaxIdleConns,
+		IdleConnTimeout: cfg.Proxy.IdleConnTimeout,
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		modelBackend, err := backendConfig.GetModelBackend(r, log)
+		modelBackend, err := modelBackendConfig.GetModelBackend(r, log)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		proxyRequest(r, modelBackend, w, &http.Client{})
+		proxyRequest(r, modelBackend, w, client)
 	}
 }
 

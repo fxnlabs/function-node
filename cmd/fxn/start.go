@@ -44,7 +44,7 @@ func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contrac
 	// Based on existing code, schedulerRegistry is used for /challenge
 	http.Handle("/challenge", auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry))
 
-	oaiProxyHandler := openai.NewOAIProxyHandler(modelBackendConfig, rootLogger)
+	oaiProxyHandler := openai.NewOAIProxyHandler(cfg, modelBackendConfig, rootLogger)
 	http.Handle("/v1/chat/completions", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
 	http.Handle("/v1/completions", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
 	http.Handle("/v1/embeddings", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))

@@ -17,3 +17,6 @@ modelBackendPath: "model_backend.yaml"
 nonceCache:
   ttl: "5m"
   cleanupInterval: "10m"
+proxy:
+  maxIdleConns: 100
+  idleConnTimeout: "90s"

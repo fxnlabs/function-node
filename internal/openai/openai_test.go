@@ -97,7 +97,7 @@ func TestNewOAIProxyHandler(t *testing.T) {
 		},
 	}
 
-	handler := NewOAIProxyHandler(backendConfig, log)
+	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 
 	t.Run("successful proxy", func(t *testing.T) {
 		reqBody := `{"model": "model-1"}`
@@ -151,7 +151,7 @@ func TestProxyRequest_APIKeyAuth(t *testing.T) {
 		},
 	}
 
-	handler := NewOAIProxyHandler(backendConfig, log)
+	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 	reqBody := `{"model": "model-1"}`
 	req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
 	rr := httptest.NewRecorder()
@@ -171,7 +171,7 @@ func TestProxyRequest_Errors(t *testing.T) {
 				},
 			},
 		}
-		handler := NewOAIProxyHandler(backendConfig, log)
+		handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 		reqBody := `{"model": "model-1"}`
 		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
 		rr := httptest.NewRecorder()
@@ -192,7 +192,7 @@ func TestProxyRequest_Errors(t *testing.T) {
 				},
 			},
 		}
-		handler := NewOAIProxyHandler(backendConfig, log)
+		handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 		reqBody := `{"model": "model-1"}`
 		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
 		rr := httptest.NewRecorder()
@@ -210,7 +210,7 @@ func TestNewOAIProxyHandler_EmptyBody(t *testing.T) {
 			},
 		},
 	}
-	handler := NewOAIProxyHandler(backendConfig, log)
+	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 	req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(""))
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
@@ -232,7 +232,7 @@ func TestNewOAIProxyHandler_BodyReadError(t *testing.T) {
 			},
 		},
 	}
-	handler := NewOAIProxyHandler(backendConfig, log)
+	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 	req := httptest.NewRequest("POST", "/v1/chat/completions", errorReader{})
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
