@@ -14,6 +14,7 @@ import (
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
 	"github.com/fxnlabs/function-node/pkg/ethclient"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
@@ -51,6 +52,10 @@ func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contrac
 
 	modelsHandler := openai.NewModelsHandler(modelBackendConfig, rootLogger)
 	http.Handle("/v1/models", auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry))
+
+	// Expose Prometheus metrics endpoint
+	http.Handle("/metrics", promhttp.Handler())
+	rootLogger.Info("Prometheus metrics available at /metrics")
 
 	addr := fmt.Sprintf(":%d", cfg.Node.ListenPort)
 	rootLogger.Info("Starting server on", zap.String("address", addr))

@@ -27,7 +27,7 @@ func TestNewChallenger(t *testing.T) {
 		{
 			name:          "matrix multiplication",
 			challengeType: "MATRIX_MULTIPLICATION",
-			expectedType:  &challengers.MatrixMultiplicationChallenger{},
+			expectedType:  challengers.NewMatrixMultiplicationChallenger(),
 			expectError:   false,
 		},
 		{

@@ -2,6 +2,24 @@
 
 The Function Node is the core software for providers on the Function Network, a peer-to-peer system for decentralized AI inference. It serves as a secure, observable proxy to any OpenAI-compatible LLM endpoint, authenticating requests from network gateways and responding to health and performance challenges from schedulers. The node interacts with on-chain registries to stay synced with the network.
 
+## Key Features
+
+- **OpenAI-Compatible Proxy**: Supports chat completions, completions, embeddings, and models endpoints
+- **Authentication**: Cryptographic signature verification for gateway and scheduler requests
+- **GPU Challenges**: Performance verification through GPU-accelerated matrix multiplication
+- **Registry Integration**: Real-time synchronization with on-chain provider, gateway, and scheduler registries
+- **Model Routing**: Flexible backend configuration for different AI models
+- **Observability**: Prometheus metrics and structured logging
+
+## Prerequisites
+
+- Go 1.21 or higher
+- (Optional) NVIDIA GPU with CUDA 12.2+ for GPU challenge support
+- (Optional) Docker with NVIDIA Container Toolkit for containerized GPU deployment
+- (Optional) [direnv](https://direnv.net/) for managing environment variables
+- Access to Ethereum RPC endpoint
+- OpenAI-compatible LLM backend(s)
+
 ## Quick Start
 
 1.  **Copy Templates:**
@@ -120,9 +138,50 @@ This command is a helper to help SHA256 and send a request to your node for test
     # Identity Challenge
     go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "IDENTITY", "payload": {}}'
 
-    # Matrix Multiplication Challenge
+    # Matrix Multiplication Challenge (requires GPU)
     go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
 
     # Endpoint Reachable Challenge
     go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
     ```
+
+## GPU Challenges
+
+The Function Node supports GPU-accelerated challenges to verify computational performance. The primary GPU challenge is matrix multiplication, which tests the provider's ability to perform parallel computations efficiently.
+
+### Matrix Multiplication Challenge
+
+This challenge verifies GPU performance by executing large matrix multiplications:
+
+- **Small matrices (< 64x64)**: Executed on CPU for efficiency
+- **Large matrices (≥ 64x64)**: Executed on GPU for performance verification
+- **Automatic fallback**: Uses CPU if GPU is unavailable
+
+### GPU Setup
+
+For GPU support, you'll need:
+
+1. **NVIDIA GPU**: CUDA Compute Capability 5.0 or higher
+2. **CUDA Toolkit**: Version 12.2 or compatible
+3. **Environment Setup**: Use direnv to automatically set the LD_LIBRARY_PATH
+   ```bash
+   # The project includes a .envrc file that automatically configures
+   # the CUDA library path when you enter the directory
+   direnv allow
+   ```
+4. **Build with CUDA support**:
+   ```bash
+   make cuda
+   ```
+
+For detailed GPU setup and deployment instructions, see [docs/matrix-multiplication-deployment.md](docs/matrix-multiplication-deployment.md).
+
+### Docker Deployment with GPU
+
+```bash
+# Build CUDA-enabled image
+docker build -f Dockerfile.cuda -t function-node:cuda .
+
+# Run with GPU support
+docker-compose -f docker-compose.cuda.yml up
+```

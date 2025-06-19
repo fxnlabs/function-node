@@ -1,0 +1,9 @@
+# Build artifacts
+*.o
+*.so
+lib/
+bin/
+include/
+
+# Test executables
+test_matmul
