@@ -14,7 +14,6 @@ import (
 	"github.com/fxnlabs/function-node/internal/logger"
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
-	ethclientpkg "github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
@@ -46,7 +45,7 @@ func main() {
 	if err != nil {
 		rootLogger.Fatal("Failed to connect to Ethereum RPC provider", zap.String("provider", cfg.RpcProvider), zap.Error(err))
 	}
-	var ethClientWrapper ethclientpkg.EthClient = ethClient
+
 	defer ethClient.Close() // Ensure client is closed when main exits
 
 	// Use for verifying signatures and preventing replay attacks.
@@ -54,23 +53,23 @@ func main() {
 
 	// Initialize router
 	routerAddress := common.HexToAddress(cfg.Registry.RouterSmartContractAddress)
-	router, err := contracts.NewRouter(ethClientWrapper, routerAddress, rootLogger, contracts.DefaultRouterABIPath)
+	router, err := contracts.NewRouter(ethClient, routerAddress, rootLogger, contracts.DefaultRouterABIPath)
 	if err != nil {
 		rootLogger.Fatal("failed to create router", zap.Error(err))
 	}
 
 	// Initialize registries
-	gatewayRegistry, err := registry.NewGatewayRegistry(ethClientWrapper, cfg, rootLogger, router, registry.GatewayRegistryABIPath)
+	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, rootLogger, router, registry.GatewayRegistryABIPath)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize gateway registry", zap.Error(err))
 	}
 
-	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClientWrapper, cfg, rootLogger)
+	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, rootLogger)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize scheduler registry", zap.Error(err))
 	}
 
-	providerRegistry, err := registry.NewProviderRegistry(ethClientWrapper, cfg, rootLogger, router, registry.ProviderRegistryABIPath)
+	providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, rootLogger, router, registry.ProviderRegistryABIPath)
 	if err != nil {
 		rootLogger.Fatal("failed to initialize provider registry", zap.Error(err))
 	}
