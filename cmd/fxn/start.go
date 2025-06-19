@@ -11,21 +11,15 @@ import (
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
 	"github.com/fxnlabs/function-node/internal/keys"
-	"github.com/fxnlabs/function-node/internal/logger"
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
 	"github.com/fxnlabs/function-node/pkg/ethclient"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
 
-const configDir = "config.yaml"
-
-func run(cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry) error {
-	zapLogger, err := logger.New(cfg.Logger.Verbosity)
-	if err != nil {
-		return err
-	}
-	rootLogger := zapLogger.Named("node")
+func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
+	rootLogger := log.Named("node")
 	modelBackendConfig, err := config.LoadModelBackendConfig(cfg.ModelBackendPath)
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
@@ -66,48 +60,42 @@ func run(cfg *config.Config, ethClient ethclient.EthClient, router contracts.Rou
 	return nil
 }
 
-func main() {
-	cfg, err := config.LoadConfig(configDir)
-	if err != nil {
-		panic(err)
-	}
-	zapLogger, err := logger.New(cfg.Logger.Verbosity)
-	if err != nil {
-		panic(err)
-	}
-	rootLogger := zapLogger.Named("node")
+func startCommand(log *zap.Logger, cfg *config.Config) *cli.Command {
+	return &cli.Command{
+		Name:  "start",
+		Usage: "Start the function node",
+		Action: func(c *cli.Context) error {
+			// Initialize Ethereum client
+			ethClient, err := goethclient.Dial(cfg.RpcProvider)
+			if err != nil {
+				log.Fatal("Failed to connect to Ethereum RPC provider", zap.String("provider", cfg.RpcProvider), zap.Error(err))
+			}
+			defer ethClient.Close()
 
-	// Initialize Ethereum client
-	ethClient, err := goethclient.Dial(cfg.RpcProvider)
-	if err != nil {
-		rootLogger.Fatal("Failed to connect to Ethereum RPC provider", zap.String("provider", cfg.RpcProvider), zap.Error(err))
-	}
-	defer ethClient.Close()
+			// Initialize router
+			routerAddress := common.HexToAddress(cfg.Registry.RouterSmartContractAddress)
+			router, err := contracts.NewRouter(ethClient, routerAddress, log, contracts.DefaultRouterABIPath)
+			if err != nil {
+				log.Fatal("failed to create router", zap.Error(err))
+			}
 
-	// Initialize router
-	routerAddress := common.HexToAddress(cfg.Registry.RouterSmartContractAddress)
-	router, err := contracts.NewRouter(ethClient, routerAddress, rootLogger, contracts.DefaultRouterABIPath)
-	if err != nil {
-		rootLogger.Fatal("failed to create router", zap.Error(err))
-	}
+			// Initialize registries
+			gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, log, router, registry.GatewayRegistryABIPath)
+			if err != nil {
+				log.Fatal("failed to initialize gateway registry", zap.Error(err))
+			}
 
-	// Initialize registries
-	gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, rootLogger, router, registry.GatewayRegistryABIPath)
-	if err != nil {
-		rootLogger.Fatal("failed to initialize gateway registry", zap.Error(err))
-	}
+			schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, log)
+			if err != nil {
+				log.Fatal("failed to initialize scheduler registry", zap.Error(err))
+			}
 
-	schedulerRegistry, err := registry.NewSchedulerRegistry(ethClient, cfg, rootLogger)
-	if err != nil {
-		rootLogger.Fatal("failed to initialize scheduler registry", zap.Error(err))
-	}
+			providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, log, router, registry.ProviderRegistryABIPath)
+			if err != nil {
+				log.Fatal("failed to initialize provider registry", zap.Error(err))
+			}
 
-	providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, rootLogger, router, registry.ProviderRegistryABIPath)
-	if err != nil {
-		rootLogger.Fatal("failed to initialize provider registry", zap.Error(err))
-	}
-
-	if err := run(cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry); err != nil {
-		rootLogger.Fatal("failed to run application", zap.Error(err))
+			return startNode(cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
+		},
 	}
 }

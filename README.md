@@ -18,7 +18,7 @@ The Function Node is the core software for providers on the Function Network, a 
     Create a new account (keypair) for your node.
 
     ```bash
-    go run cmd/cli/main.go account new
+    go run github.com/fxnlabs/function-node/cmd/fxn account new
     ```
 
 3.  *Register node into the network using the address**
@@ -26,7 +26,7 @@ The Function Node is the core software for providers on the Function Network, a 
     Create a new account (keypair) for your node.
 
     ```bash
-    go run cmd/cli/main.go account get
+    go run github.com/fxnlabs/function-node/cmd/fxn account get
     ```
 
     This will output your node address.
@@ -36,7 +36,7 @@ The Function Node is the core software for providers on the Function Network, a 
     Start the node software.
 
     ```bash
-    go run cmd/node/main.go
+    go run github.com/fxnlabs/function-node/cmd/fxn start
     ```
 
 ## Implementation Details
@@ -96,16 +96,16 @@ This command is a helper to help SHA256 and send a request to your node for test
 
     ```bash
     # Chat Completions
-    go run cmd/send_request/main.go /v1/chat/completions '{"model": "meta/llama-4-scout-17b-16e-instruct", "messages": [{"role": "user", "content": "Hello!"}]}'
+    go run github.com/fxnlabs/function-node/cmd/send_request /v1/chat/completions '{"model": "meta/llama-4-scout-17b-16e-instruct", "messages": [{"role": "user", "content": "Hello!"}]}'
 
     # Embeddings
-    go run cmd/send_request/main.go /v1/embeddings '{"model": "meta/llama-4-scout-17b-16e-instruct", "input": "The quick brown fox jumped over the lazy dog"}'
+    go run github.com/fxnlabs/function-node/cmd/send_request /v1/embeddings '{"model": "meta/llama-4-scout-17b-16e-instruct", "input": "The quick brown fox jumped over the lazy dog"}'
 
     # Completions
-    go run cmd/send_request/main.go /v1/completions '{"model": "meta/llama-4-scout-17b-16e-instruct", "prompt": "Once upon a time"}'
+    go run github.com/fxnlabs/function-node/cmd/send_request /v1/completions '{"model": "meta/llama-4-scout-17b-16e-instruct", "prompt": "Once upon a time"}'
 
     # Models
-    go run cmd/send_request/main.go /v1/models '{}'
+    go run github.com/fxnlabs/function-node/cmd/send_request /v1/models '{}'
     ```
 
     **Challenge Request Examples:**
@@ -118,15 +118,15 @@ This command is a helper to help SHA256 and send a request to your node for test
 
     **Identity Challenge:**
     ```bash
-    go run cmd/send_request/main.go /challenge '{"type": "IDENTITY", "payload": {}}'
+    go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "IDENTITY", "payload": {}}'
     ```
 
     **Matrix Multiplication Challenge:**
     ```bash
-    go run cmd/send_request/main.go /challenge '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
+    go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "MATRIX_MULTIPLICATION", "payload": {"A": [[1, 2], [3, 4]], "B": [[5, 6], [7, 8]]}}'
     ```
 
     **Endpoint Reachable Challenge:**
     ```bash
-    go run cmd/send_request/main.go /challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
+    go run github.com/fxnlabs/function-node/cmd/send_request /challenge '{"type": "ENDPOINT_REACHABLE", "payload": "https://www.google.com"}'
     ```

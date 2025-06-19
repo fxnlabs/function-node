@@ -2,6 +2,7 @@ version: '3.8'
 services:
   function-node:
     build: .
+    command: ["./fxn", "start"]
     volumes:
       - ./config.yaml:/app/config.yaml
       - ./nodekey.json:/app/nodekey.json

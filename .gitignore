@@ -44,6 +44,7 @@ model_backend.yaml
 /node
 /cli
 /main
+/fxn
 
 # Keystore
 /keystore
