@@ -80,13 +80,13 @@ func startCommand(log *zap.Logger, cfg *config.Config) *cli.Command {
 
 			// Initialize router
 			routerAddress := common.HexToAddress(cfg.Registry.RouterSmartContractAddress)
-			router, err := contracts.NewRouter(ethClient, routerAddress, log, contracts.DefaultRouterABIPath)
+			router, err := contracts.NewRouter(ethClient, routerAddress, log)
 			if err != nil {
 				log.Fatal("failed to create router", zap.Error(err))
 			}
 
 			// Initialize registries
-			gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, log, router, registry.GatewayRegistryABIPath)
+			gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, log, router)
 			if err != nil {
 				log.Fatal("failed to initialize gateway registry", zap.Error(err))
 			}
@@ -96,7 +96,7 @@ func startCommand(log *zap.Logger, cfg *config.Config) *cli.Command {
 				log.Fatal("failed to initialize scheduler registry", zap.Error(err))
 			}
 
-			providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, log, router, registry.ProviderRegistryABIPath)
+			providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, log, router)
 			if err != nil {
 				log.Fatal("failed to initialize provider registry", zap.Error(err))
 			}

@@ -2,13 +2,12 @@ package contracts
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/fxnlabs/function-node/fixtures"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,19 +22,9 @@ func TestNewRouter(t *testing.T) {
 	contractAddress := common.HexToAddress("0x123")
 
 	t.Run("success", func(t *testing.T) {
-		router, err := NewRouter(mockClient, contractAddress, logger, filepath.Join("../../", DefaultRouterABIPath))
+		router, err := NewRouter(mockClient, contractAddress, logger)
 		require.NoError(t, err)
 		assert.NotNil(t, router)
-	})
-
-	t.Run("invalid ABI", func(t *testing.T) {
-		_, err := NewRouter(mockClient, contractAddress, logger, "../../fixtures/tests/contracts/invalid_abi.json")
-		assert.Error(t, err)
-	})
-
-	t.Run("ABI file not found", func(t *testing.T) {
-		_, err := NewRouter(mockClient, contractAddress, logger, "nonexistent.json")
-		assert.Error(t, err)
 	})
 }
 
@@ -43,16 +32,14 @@ func TestRouter_getAddress(t *testing.T) {
 	logger := zap.NewNop()
 	mockClient := new(mocks.MockEthClient)
 	contractAddress := common.HexToAddress("0x123")
-	router, err := NewRouter(mockClient, contractAddress, logger, filepath.Join("../../", DefaultRouterABIPath))
+	router, err := NewRouter(mockClient, contractAddress, logger)
 	require.NoError(t, err)
 
 	methodName := "gatewayRegistry"
 	expectedAddress := common.HexToAddress("0x456")
 
 	// Pack the method call
-	abiBytes, err := os.ReadFile("../../fixtures/abi/Router.json")
-	require.NoError(t, err)
-	parsedABI, err := abi.JSON(strings.NewReader(string(abiBytes)))
+	parsedABI, err := abi.JSON(strings.NewReader(fixtures.RouterABI))
 	require.NoError(t, err)
 
 	var packed []byte
@@ -93,7 +80,7 @@ func TestRouter_GetGatewayRegistryAddress(t *testing.T) {
 	logger := zap.NewNop()
 	mockClient := new(mocks.MockEthClient)
 	contractAddress := common.HexToAddress("0x123")
-	router, err := NewRouter(mockClient, contractAddress, logger, filepath.Join("../../", DefaultRouterABIPath))
+	router, err := NewRouter(mockClient, contractAddress, logger)
 	require.NoError(t, err)
 
 	expectedAddress := common.HexToAddress("0xabc")
@@ -115,7 +102,7 @@ func TestRouter_GetProviderRegistryAddress(t *testing.T) {
 	logger := zap.NewNop()
 	mockClient := new(mocks.MockEthClient)
 	contractAddress := common.HexToAddress("0x123")
-	router, err := NewRouter(mockClient, contractAddress, logger, filepath.Join("../../", DefaultRouterABIPath))
+	router, err := NewRouter(mockClient, contractAddress, logger)
 	require.NoError(t, err)
 
 	expectedAddress := common.HexToAddress("0xdef")
