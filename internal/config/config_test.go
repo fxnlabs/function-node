@@ -12,7 +12,7 @@ import (
 
 func TestLoadConfig(t *testing.T) {
 	t.Run("valid config", func(t *testing.T) {
-		config, err := LoadConfig("../../fixtures/tests/config/config.yaml")
+		config, err := LoadConfig("../../fixtures/tests/config/valid_config.yaml")
 		require.NoError(t, err)
 		require.NotNil(t, config)
 

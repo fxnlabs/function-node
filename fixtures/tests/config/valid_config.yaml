@@ -1,0 +1,20 @@
+node:
+  keyfile: "key.json"
+  listenPort: 8080
+logger:
+  verbosity: "info"
+registry:
+  routerSmartContractAddress: "0x123"
+  gateway:
+    pollInterval: 10s
+  provider:
+    pollInterval: 15s
+rpcProvider: "http://localhost:8545"
+schedulerAddress: "0x456"
+modelBackendPath: "model_backend.yaml"
+nonceCache:
+  ttl: 1m
+  cleanupInterval: 30s
+proxy:
+  maxIdleConns: 50
+  idleConnTimeout: 60s
