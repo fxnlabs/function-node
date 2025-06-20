@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,8 +16,11 @@ type KeyFile struct {
 	PrivateKey string `json:"private_key"`
 }
 
-func LoadPrivateKey(keyfile string) (*ecdsa.PrivateKey, common.Address, error) {
-	data, err := os.ReadFile(keyfile)
+const keyFileName = "nodekey.json"
+
+func LoadPrivateKey(homePath string) (*ecdsa.PrivateKey, common.Address, error) {
+	keyfilePath := filepath.Join(homePath, keyFileName)
+	data, err := os.ReadFile(keyfilePath)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
@@ -42,7 +46,7 @@ func LoadPrivateKey(keyfile string) (*ecdsa.PrivateKey, common.Address, error) {
 	return privateKey, address, nil
 }
 
-func GenerateKeyFile(path string) error {
+func GenerateKeyFile(homePath string) error {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
 		return err
@@ -68,5 +72,5 @@ func GenerateKeyFile(path string) error {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0600)
+	return os.WriteFile(filepath.Join(homePath, keyFileName), data, 0600)
 }

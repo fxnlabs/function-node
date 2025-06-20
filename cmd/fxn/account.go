@@ -14,30 +14,18 @@ func accountCommands() *cli.Command {
 			{
 				Name:  "new",
 				Usage: "Create a new account",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "out",
-						Value: "nodekey.json",
-						Usage: "path to save the key file",
-					},
-				},
 				Action: func(c *cli.Context) error {
-					return keys.GenerateKeyFile(c.String("out"))
+					homeDir := c.App.Metadata["homeDir"].(string)
+					return keys.GenerateKeyFile(homeDir)
 				},
 			},
 			{
 				Name:  "get",
 				Usage: "Get the account address",
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						Name:  "in",
-						Value: "nodekey.json",
-						Usage: "path to the key file",
-					},
-				},
 				Action: func(c *cli.Context) error {
 					log := c.App.Metadata["logger"].(*zap.Logger)
-					_, address, err := keys.LoadPrivateKey(c.String("in"))
+					homeDir := c.App.Metadata["homeDir"].(string)
+					_, address, err := keys.LoadPrivateKey(homeDir)
 					if err != nil {
 						return err
 					}
