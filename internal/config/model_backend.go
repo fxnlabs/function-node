@@ -31,8 +31,8 @@ type ModelExtractor struct {
 	Model string `json:"model"`
 }
 
-func LoadModelBackendConfig(basePath string) (*ModelBackendConfig, error) {
-	configPath := filepath.Join(basePath, "model_backend.yaml")
+func LoadModelBackendConfig(homePath string) (*ModelBackendConfig, error) {
+	configPath := filepath.Join(homePath, "model_backend.yaml")
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err

@@ -20,9 +20,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
+func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
 	rootLogger := log.Named("node")
-	modelBackendConfig, err := config.LoadModelBackendConfig(config.GetDefaultConfigHome())
+	modelBackendConfig, err := config.LoadModelBackendConfig(configHomePath)
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
@@ -105,7 +105,7 @@ func startCommand(log *zap.Logger, home string) *cli.Command {
 				log.Fatal("failed to initialize provider registry", zap.Error(err))
 			}
 
-			return startNode(cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
+			return startNode(home, cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
 		},
 	}
 }
