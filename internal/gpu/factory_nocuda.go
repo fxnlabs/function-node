@@ -1,5 +1,5 @@
-//go:build !cuda
-// +build !cuda
+//go:build !cuda && !metal
+// +build !cuda,!metal
 
 package gpu
 
@@ -8,9 +8,9 @@ import (
 )
 
 // NewGPUBackend creates an appropriate GPU backend based on available hardware
-// Without CUDA support, it will always return CPU backend
+// Without GPU support, it will always return CPU backend
 func NewGPUBackend(logger *slog.Logger) GPUBackend {
 	// Only CPU backend available
-	logger.Info("Using CPU backend (compiled without CUDA support)")
+	logger.Info("Using CPU backend (compiled without GPU support)")
 	return NewCPUBackend(logger)
 }

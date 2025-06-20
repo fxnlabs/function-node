@@ -1,5 +1,5 @@
 # Function Node Makefile
-.PHONY: all build cuda cpu test benchmark clean docker-cuda docker-cpu
+.PHONY: all build cuda metal cpu test benchmark clean docker-cuda docker-cpu
 
 # Default target
 all: build
@@ -17,7 +17,18 @@ cuda-compile:
 	@echo "Compiling CUDA sources..."
 	$(MAKE) -C cuda all
 
-# Build with CPU fallback (no CUDA)
+# Build with Metal support (macOS only)
+metal: metal-compile
+	@echo "Building with Metal support..."
+	CGO_ENABLED=1 \
+	go build -tags metal -o fxn github.com/fxnlabs/function-node/cmd/fxn
+
+# Compile Metal sources and shaders
+metal-compile:
+	@echo "Compiling Metal backend..."
+	$(MAKE) -C metal all
+
+# Build with CPU fallback (no GPU)
 cpu:
 	@echo "Building with CPU fallback..."
 	go build -o fxn github.com/fxnlabs/function-node/cmd/fxn
@@ -40,6 +51,13 @@ test-cpu:
 	@echo "Running CPU tests..."
 	go test -v ./...
 
+# Run tests with Metal support
+test-metal:
+	@echo "Running Metal tests..."
+	CGO_ENABLED=1 \
+	DYLD_LIBRARY_PATH="$(PWD)/metal/lib:$$DYLD_LIBRARY_PATH" \
+	go test -tags metal -v ./internal/gpu/...
+
 # Run performance benchmarks
 benchmark:
 	@echo "Running benchmarks..."
@@ -52,6 +70,12 @@ benchmark:
 benchmark-cpu:
 	@echo "Running CPU benchmarks..."
 	go test -bench=. -benchmem ./internal/challenge/...
+
+# Run Metal benchmarks
+benchmark-metal:
+	@echo "Running Metal benchmarks..."
+	CGO_ENABLED=1 \
+	go test -tags metal -bench=. -benchmem ./internal/gpu/...
 
 # Build Docker image with CUDA support
 docker-cuda:
@@ -80,7 +104,8 @@ mocks:
 clean:
 	@echo "Cleaning build artifacts..."
 	rm -f fxn
-	$(MAKE) -C cuda clean
+	$(MAKE) -C cuda clean 2>/dev/null || true
+	$(MAKE) -C metal clean 2>/dev/null || true
 	go clean -cache
 
 # Install dependencies
@@ -105,6 +130,17 @@ check-cuda:
 	@which nvcc > /dev/null 2>&1 && echo "CUDA compiler found at: $$(which nvcc)" || echo "CUDA compiler not found"
 	@which nvidia-smi > /dev/null 2>&1 && nvidia-smi || echo "nvidia-smi not found"
 
+# Check Metal availability (macOS only)
+check-metal:
+	@echo "Checking Metal availability..."
+	@if [ "$$(uname)" = "Darwin" ]; then \
+		echo "Running on macOS - Metal support available"; \
+		system_profiler SPDisplaysDataType | grep -E "(Chipset Model:|VRAM|GPU|Graphics)"; \
+		CGO_ENABLED=1 go run -tags metal github.com/fxnlabs/function-node/cmd/fxn gpu info 2>/dev/null || echo "Run 'make metal' to build with Metal support"; \
+	else \
+		echo "Metal is only available on macOS"; \
+	fi
+
 # Development build with hot reload (requires air)
 dev:
 	@echo "Starting development server with hot reload..."
@@ -114,11 +150,15 @@ dev:
 help:
 	@echo "Available targets:"
 	@echo "  cuda          - Build with CUDA support"
+	@echo "  metal         - Build with Metal support (macOS only)"
+	@echo "  metal-compile - Compile Metal backend library and shaders"
 	@echo "  cpu           - Build with CPU fallback"
 	@echo "  test          - Run tests with CUDA support"
-	@echo "  test-cpu      - Run tests without CUDA"
+	@echo "  test-cpu      - Run tests without GPU"
+	@echo "  test-metal    - Run tests with Metal support"
 	@echo "  benchmark     - Run performance benchmarks with CUDA"
-	@echo "  benchmark-cpu - Run performance benchmarks without CUDA"
+	@echo "  benchmark-cpu - Run performance benchmarks without GPU"
+	@echo "  benchmark-metal - Run performance benchmarks with Metal"
 	@echo "  docker-cuda   - Build Docker image with CUDA support"
 	@echo "  docker-cpu    - Build Docker image with CPU support"
 	@echo "  docker-run-cuda - Run with docker-compose (CUDA)"
@@ -129,5 +169,6 @@ help:
 	@echo "  lint          - Run linter"
 	@echo "  fmt           - Format code"
 	@echo "  check-cuda    - Check CUDA installation"
+	@echo "  check-metal   - Check Metal availability"
 	@echo "  dev           - Start development server with hot reload"
 	@echo "  help          - Show this help message"

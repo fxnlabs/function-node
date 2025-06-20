@@ -56,5 +56,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Response: %s\n", string(respBody))
+	fmt.Printf("%s\n", string(respBody))
 }

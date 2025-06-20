@@ -156,7 +156,7 @@ func (c *MatrixMultiplicationChallenger) Execute(payload interface{}, log *zap.L
 	var useGPU bool
 	var deviceInfo map[string]interface{}
 	
-	if params.Backend == "gpu" || (params.Backend == "auto" && matrixSize >= 100) {
+	if params.Backend == "gpu" || params.Backend == "metal" || params.Backend == "cuda" || (params.Backend == "auto" && matrixSize >= 100) {
 		log.Debug("Attempting to initialize GPU backend",
 			zap.String("backend_request", params.Backend),
 			zap.Int("matrix_size", matrixSize))
@@ -178,8 +178,9 @@ func (c *MatrixMultiplicationChallenger) Execute(payload interface{}, log *zap.L
 				zap.String("device_name", info.Name),
 				zap.String("compute_capability", info.ComputeCapability),
 				zap.Float64("memory_gb", deviceInfo["memoryGB"].(float64)))
-		} else if params.Backend == "gpu" {
-			log.Warn("GPU requested but not available, falling back to CPU",
+		} else if params.Backend == "gpu" || params.Backend == "metal" || params.Backend == "cuda" {
+			log.Warn("Specific GPU backend requested but not available, falling back to CPU",
+				zap.String("requested_backend", params.Backend),
 				zap.Error(err))
 		}
 	}
