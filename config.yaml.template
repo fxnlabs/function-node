@@ -1,5 +1,4 @@
 node:
-  keyfile: "nodekey.json"
   listenPort: 8080
 logger:
   verbosity: "info"
