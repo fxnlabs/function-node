@@ -66,12 +66,15 @@ func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.Et
 	return nil
 }
 
-func startCommand(log *zap.Logger, home string) *cli.Command {
+func startCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "start",
 		Usage: "Start the function node",
 		Action: func(c *cli.Context) error {
-			cfg, err := config.LoadConfig(home)
+			log := c.App.Metadata["logger"].(*zap.Logger)
+			cfg := c.App.Metadata["cfg"].(*config.Config)
+			homeDir := c.App.Metadata["homeDir"].(string)
+			cfg, err := config.LoadConfig(homeDir)
 			if err != nil {
 				log.Fatal("failed to load config", zap.Error(err))
 			}
@@ -105,7 +108,7 @@ func startCommand(log *zap.Logger, home string) *cli.Command {
 				log.Fatal("failed to initialize provider registry", zap.Error(err))
 			}
 
-			return startNode(home, cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
+			return startNode(homeDir, cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
 		},
 	}
 }

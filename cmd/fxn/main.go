@@ -17,8 +17,9 @@ func main() {
 	var rootLogger *zap.Logger
 
 	app := &cli.App{
-		Name:  "fxn",
-		Usage: "A CLI for interacting with the Function Network",
+		Name:     "fxn",
+		Metadata: map[string]interface{}{},
+		Usage:    "A CLI for interacting with the Function Network",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:        "home",
@@ -38,12 +39,16 @@ func main() {
 			if err != nil {
 				return err
 			}
-			rootLogger = zapLogger.Named("cli")
+			rootLogger := zapLogger.Named("cli")
+			// store them for downstream commands:
+			c.App.Metadata["cfg"] = cfg
+			c.App.Metadata["logger"] = rootLogger
+			c.App.Metadata["homeDir"] = home
 			return nil
 		},
 		Commands: []*cli.Command{
-			accountCommands(rootLogger),
-			startCommand(rootLogger, home),
+			accountCommands(),
+			startCommand(),
 		},
 	}
 

@@ -6,7 +6,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func accountCommands(log *zap.Logger) *cli.Command {
+func accountCommands() *cli.Command {
 	return &cli.Command{
 		Name:  "account",
 		Usage: "Manage account",
@@ -36,6 +36,7 @@ func accountCommands(log *zap.Logger) *cli.Command {
 					},
 				},
 				Action: func(c *cli.Context) error {
+					log := c.App.Metadata["logger"].(*zap.Logger)
 					_, address, err := keys.LoadPrivateKey(c.String("in"))
 					if err != nil {
 						return err
