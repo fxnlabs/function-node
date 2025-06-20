@@ -12,6 +12,5 @@ FROM alpine:3.22.0
 WORKDIR /app
 
 COPY --from=builder /app/fxn .
-COPY --from=builder /app/fixtures/abi ./fixtures/abi
 
 CMD ["./fxn"]

@@ -3,7 +3,9 @@ services:
   function-node:
     build: .
     command: ["./fxn", "start"]
+    environment:
+      - home=/app/.fxn
     volumes:
-      - ./config.yaml:/app/config.yaml
-      - ./nodekey.json:/app/nodekey.json
-      - ./model_backend.yaml:/app/model_backend.yaml
+      - ~/.fxn/config.yaml:/app/.fxn/config.yaml
+      - ~/.fxn/nodekey.json:/app/.fxn/nodekey.json
+      - ~/.fxn/model_backend.yaml:/app/.fxn/model_backend.yaml

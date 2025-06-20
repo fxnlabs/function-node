@@ -7,9 +7,9 @@ services:
       dockerfile: Dockerfile.cuda
     command: ["./fxn", "start"]
     volumes:
-      - ./config.yaml:/app/config.yaml
-      - ./nodekey.json:/app/nodekey.json
-      - ./model_backend.yaml:/app/model_backend.yaml
+      - ./config.yaml:/app/.fxn/config.yaml
+      - ./nodekey.json:/app/.fxn/nodekey.json
+      - ./model_backend.yaml:/app/.fxn/model_backend.yaml
     deploy:
       resources:
         reservations:
@@ -18,6 +18,7 @@ services:
               count: all
               capabilities: [gpu]
     environment:
+      - home=/app/.fxn
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     runtime: nvidia
