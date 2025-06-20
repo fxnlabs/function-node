@@ -11,29 +11,39 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadConfig("config.yaml")
-	if err != nil {
-		panic(err)
-	}
-	zapLogger, err := logger.New(cfg.Logger.Verbosity)
-	if err != nil {
-		panic(err)
-	}
-	rootLogger := zapLogger.Named("cli")
+	var home string
+	var cfg *config.Config
+	var zapLogger *zap.Logger
+	var rootLogger *zap.Logger
+
 	app := &cli.App{
 		Name:  "fxn",
 		Usage: "A CLI for interacting with the Function Network",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:    "config",
-				Value:   "config.yaml",
-				Usage:   "Load configuration from `FILE`",
-				EnvVars: []string{"FXN_CONFIG"},
+				Name:        "home",
+				Value:       config.GetDefaultConfigHome(),
+				Usage:       "Path to the fxn home directory",
+				EnvVars:     []string{"home"},
+				Destination: &home,
 			},
+		},
+		Before: func(c *cli.Context) error {
+			var err error
+			cfg, err = config.LoadConfig(home)
+			if err != nil {
+				return err
+			}
+			zapLogger, err = logger.New(cfg.Logger.Verbosity)
+			if err != nil {
+				return err
+			}
+			rootLogger = zapLogger.Named("cli")
+			return nil
 		},
 		Commands: []*cli.Command{
 			accountCommands(rootLogger),
-			startCommand(rootLogger, cfg),
+			startCommand(rootLogger, home),
 		},
 	}
 

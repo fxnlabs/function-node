@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -30,8 +31,9 @@ type ModelExtractor struct {
 	Model string `json:"model"`
 }
 
-func LoadModelBackendConfig(path string) (*ModelBackendConfig, error) {
-	data, err := os.ReadFile(path)
+func LoadModelBackendConfig(basePath string) (*ModelBackendConfig, error) {
+	configPath := filepath.Join(basePath, "model_backend.yaml")
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}

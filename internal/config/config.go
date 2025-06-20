@@ -2,10 +2,19 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
+
+func GetDefaultConfigHome() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	return filepath.Join(home, ".fxn")
+}
 
 type Config struct {
 	Node struct {
@@ -37,8 +46,9 @@ type Config struct {
 	} `yaml:"proxy"`
 }
 
-func LoadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+func LoadConfig(homePath string) (*Config, error) {
+	configPath := filepath.Join(homePath, "config.yaml")
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}

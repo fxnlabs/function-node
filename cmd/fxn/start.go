@@ -22,7 +22,7 @@ import (
 
 func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
 	rootLogger := log.Named("node")
-	modelBackendConfig, err := config.LoadModelBackendConfig(cfg.ModelBackendPath)
+	modelBackendConfig, err := config.LoadModelBackendConfig(config.GetDefaultConfigHome())
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
@@ -66,11 +66,15 @@ func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contrac
 	return nil
 }
 
-func startCommand(log *zap.Logger, cfg *config.Config) *cli.Command {
+func startCommand(log *zap.Logger, home string) *cli.Command {
 	return &cli.Command{
 		Name:  "start",
 		Usage: "Start the function node",
 		Action: func(c *cli.Context) error {
+			cfg, err := config.LoadConfig(home)
+			if err != nil {
+				log.Fatal("failed to load config", zap.Error(err))
+			}
 			// Initialize Ethereum client
 			ethClient, err := goethclient.Dial(cfg.RpcProvider)
 			if err != nil {
