@@ -11,6 +11,9 @@ import (
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
 	"github.com/fxnlabs/function-node/internal/keys"
+	"github.com/fxnlabs/function-node/internal/metrics"
+
+	// "github.com/fxnlabs/function-node/internal/metrics" // Already imported for metrics.EndpointResponses
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
 	"github.com/fxnlabs/function-node/pkg/ethclient"
@@ -43,15 +46,15 @@ func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contrac
 	// Assuming AuthMiddleware might need providerRegistry if it performs provider registration checks.
 	// If not, schedulerRegistry might be the correct one for challenges.
 	// Based on existing code, schedulerRegistry is used for /challenge
-	http.Handle("/challenge", auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry))
+	http.Handle("/challenge", metrics.Middleware(auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry), "/challenge"))
 
 	oaiProxyHandler := openai.NewOAIProxyHandler(cfg, modelBackendConfig, rootLogger)
-	http.Handle("/v1/chat/completions", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
-	http.Handle("/v1/completions", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
-	http.Handle("/v1/embeddings", auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry))
+	http.Handle("/v1/chat/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/chat/completions"))
+	http.Handle("/v1/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/completions"))
+	http.Handle("/v1/embeddings", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/embeddings"))
 
 	modelsHandler := openai.NewModelsHandler(modelBackendConfig, rootLogger)
-	http.Handle("/v1/models", auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry))
+	http.Handle("/v1/models", metrics.Middleware(auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/models"))
 
 	// Expose Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
