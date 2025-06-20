@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,13 +39,7 @@ func TestLoadModelBackendConfig(t *testing.T) {
 	})
 
 	t.Run("invalid yaml", func(t *testing.T) {
-		content := "invalid-yaml"
-		tmpDir := t.TempDir()
-		configPath := filepath.Join(tmpDir, "config.yaml")
-		err := os.WriteFile(configPath, []byte(content), 0644)
-		require.NoError(t, err)
-
-		config, err := LoadModelBackendConfig(configPath)
+		config, err := LoadModelBackendConfig("../../fixtures/tests/invalid_config/config.yaml")
 		assert.Error(t, err)
 		assert.Nil(t, config)
 	})
