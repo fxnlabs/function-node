@@ -27,7 +27,7 @@ static dispatch_queue_t bufferPoolQueue = nil;
 // Get or allocate buffer from pool
 id<MTLBuffer> get_pooled_buffer(size_t size) {
     __block id<MTLBuffer> buffer = nil;
-    
+
     dispatch_sync(bufferPoolQueue, ^{
         // Look for existing buffer of sufficient size
         for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
@@ -37,10 +37,10 @@ id<MTLBuffer> get_pooled_buffer(size_t size) {
                 return;
             }
         }
-        
+
         // Allocate new buffer
         buffer = [device newBufferWithLength:size options:MTLResourceStorageModeShared];
-        
+
         // Try to add to pool
         for (int i = 0; i < BUFFER_POOL_SIZE; i++) {
             if (bufferPool[i].buffer == nil) {
@@ -51,7 +51,7 @@ id<MTLBuffer> get_pooled_buffer(size_t size) {
             }
         }
     });
-    
+
     return buffer;
 }
 
@@ -74,22 +74,22 @@ int metal_init() {
         if (device == nil) {
             return -1;
         }
-        
+
         commandQueue = [device newCommandQueue];
         if (commandQueue == nil) {
             return -2;
         }
-        
+
         // Initialize buffer pool queue
         bufferPoolQueue = dispatch_queue_create("com.fxnlabs.metal.bufferpool", DISPATCH_QUEUE_SERIAL);
-        
+
         // Create the compute pipeline for matrix multiplication
         NSError *error = nil;
-        
+
         // Load compiled shader from metallib file
         // Get executable path for relative paths
         NSString *execPath = [[NSProcessInfo processInfo].arguments[0] stringByDeletingLastPathComponent];
-        
+
         // Try all possible paths in a single loop
         NSArray *libraryPaths = @[
             // Primary path
@@ -107,7 +107,7 @@ int metal_init() {
             [execPath stringByAppendingPathComponent:@"metal/lib/matmul.metallib"],
             [execPath stringByAppendingPathComponent:@"matmul.metallib"]
         ];
-        
+
         library = nil;
         for (NSString *path in libraryPaths) {
             if ([[NSFileManager defaultManager] fileExistsAtPath:path]) {
@@ -119,30 +119,30 @@ int metal_init() {
                 }
             }
         }
-        
+
         if (library == nil) {
-            NSLog(@"Error: Could not load Metal shader library. Please run 'make metal-shaders' to compile the Metal shaders.");
+            NSLog(@"Error: Could not load Metal shader library. Please run 'make metal' to compile the Metal shaders.");
             return -3;
         }
-        
+
         // Create simple pipeline
         id<MTLFunction> matmulSimpleFunction = [library newFunctionWithName:@"matmul_simple"];
         if (matmulSimpleFunction == nil) {
             return -4;
         }
-        
+
         matmulSimplePipeline = [device newComputePipelineStateWithFunction:matmulSimpleFunction error:&error];
         if (matmulSimplePipeline == nil) {
             NSLog(@"Failed to create simple pipeline: %@", error);
             return -5;
         }
-        
+
         // Create tiled pipeline if available
         id<MTLFunction> matmulTiledFunction = [library newFunctionWithName:@"matmul_tiled"];
         if (matmulTiledFunction != nil) {
             matmulTiledPipeline = [device newComputePipelineStateWithFunction:matmulTiledFunction error:&error];
         }
-        
+
         return 0;
     }
 }
@@ -161,33 +161,33 @@ int metal_get_device_info(MetalDeviceInfo* info) {
         if (device == nil || info == NULL) {
             return -1;
         }
-        
+
         // Copy device name
         const char* deviceName = [[device name] UTF8String];
         strncpy(info->name, deviceName, sizeof(info->name) - 1);
         info->name[sizeof(info->name) - 1] = '\0';
-        
+
         // Get memory info
         info->total_memory = [device recommendedMaxWorkingSetSize];
-        
+
         // Estimate available memory (macOS doesn't provide exact available GPU memory)
         vm_size_t page_size;
         vm_statistics64_data_t vm_stat;
         mach_msg_type_number_t host_size = sizeof(vm_stat) / sizeof(natural_t);
-        
+
         if (host_page_size(mach_host_self(), &page_size) == KERN_SUCCESS &&
             host_statistics64(mach_host_self(), HOST_VM_INFO64, (host_info64_t)&vm_stat, &host_size) == KERN_SUCCESS) {
             info->available_memory = (vm_stat.free_count + vm_stat.inactive_count) * page_size;
         } else {
             info->available_memory = info->total_memory / 2; // Fallback estimate
         }
-        
+
         if (matmulSimplePipeline) {
             info->max_threads_per_threadgroup = [matmulSimplePipeline maxTotalThreadsPerThreadgroup];
         } else {
             info->max_threads_per_threadgroup = 1024; // Default for most Apple GPUs
         }
-        
+
         // Check GPU family
         if ([device supportsFamily:MTLGPUFamilyApple7]) {
             strcpy(info->gpu_family, "Apple7");
@@ -206,12 +206,12 @@ int metal_get_device_info(MetalDeviceInfo* info) {
         } else {
             strcpy(info->gpu_family, "Unknown");
         }
-        
+
         // Check if unified memory
         info->is_unified_memory = [device hasUnifiedMemory] ? 1 : 0;
         info->is_removable = [device isRemovable] ? 1 : 0;
         info->supports_mps = 1; // MPS is supported on all modern macOS devices
-        
+
         return 0;
     }
 }
@@ -222,46 +222,46 @@ int metal_matmul_mps(const float* h_A, const float* h_B, float* h_C, int M, int 
         if (device == nil || commandQueue == nil) {
             return -1;
         }
-        
+
         // Create matrix descriptors
         MPSMatrixDescriptor *descriptorA = [MPSMatrixDescriptor matrixDescriptorWithRows:M
                                                                                 columns:K
                                                                                rowBytes:K * sizeof(float)
                                                                                dataType:MPSDataTypeFloat32];
-        
+
         MPSMatrixDescriptor *descriptorB = [MPSMatrixDescriptor matrixDescriptorWithRows:K
                                                                                 columns:N
                                                                                rowBytes:N * sizeof(float)
                                                                                dataType:MPSDataTypeFloat32];
-        
+
         MPSMatrixDescriptor *descriptorC = [MPSMatrixDescriptor matrixDescriptorWithRows:M
                                                                                 columns:N
                                                                                rowBytes:N * sizeof(float)
                                                                                dataType:MPSDataTypeFloat32];
-        
+
         // Calculate buffer sizes
         size_t size_A = M * K * sizeof(float);
         size_t size_B = K * N * sizeof(float);
         size_t size_C = M * N * sizeof(float);
-        
+
         // Get buffers from pool
         id<MTLBuffer> bufferA = get_pooled_buffer(size_A);
         id<MTLBuffer> bufferB = get_pooled_buffer(size_B);
         id<MTLBuffer> bufferC = get_pooled_buffer(size_C);
-        
+
         if (bufferA == nil || bufferB == nil || bufferC == nil) {
             return -2;
         }
-        
+
         // Copy data to buffers
         memcpy([bufferA contents], h_A, size_A);
         memcpy([bufferB contents], h_B, size_B);
-        
+
         // Create MPS matrices
         MPSMatrix *matrixA = [[MPSMatrix alloc] initWithBuffer:bufferA descriptor:descriptorA];
         MPSMatrix *matrixB = [[MPSMatrix alloc] initWithBuffer:bufferB descriptor:descriptorB];
         MPSMatrix *matrixC = [[MPSMatrix alloc] initWithBuffer:bufferC descriptor:descriptorC];
-        
+
         // Create matrix multiplication kernel
         MPSMatrixMultiplication *matmul = [[MPSMatrixMultiplication alloc] initWithDevice:device
                                                                           transposeLeft:NO
@@ -271,28 +271,28 @@ int metal_matmul_mps(const float* h_A, const float* h_B, float* h_C, int M, int 
                                                                           interiorColumns:K
                                                                           alpha:1.0
                                                                           beta:0.0];
-        
+
         // Create command buffer
         id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
-        
+
         // Encode the operation
         [matmul encodeToCommandBuffer:commandBuffer
                            leftMatrix:matrixA
                            rightMatrix:matrixB
                            resultMatrix:matrixC];
-        
+
         // Commit and wait
         [commandBuffer commit];
         [commandBuffer waitUntilCompleted];
-        
+
         // Copy result back
         memcpy(h_C, [bufferC contents], size_C);
-        
+
         // Return buffers to pool
         return_pooled_buffer(bufferA);
         return_pooled_buffer(bufferB);
         return_pooled_buffer(bufferC);
-        
+
         return 0;
     }
 }
@@ -303,7 +303,7 @@ int metal_matmul_kernel(const float* h_A, const float* h_B, float* h_C, int M, i
         if (device == nil || commandQueue == nil || matmulSimplePipeline == nil) {
             return -1;
         }
-        
+
         // Choose appropriate pipeline
         id<MTLComputePipelineState> pipeline = nil;
         if (use_tiled && matmulTiledPipeline != nil) {
@@ -311,35 +311,35 @@ int metal_matmul_kernel(const float* h_A, const float* h_B, float* h_C, int M, i
         } else {
             pipeline = matmulSimplePipeline;
         }
-        
+
         // Calculate buffer sizes
         size_t size_A = M * K * sizeof(float);
         size_t size_B = K * N * sizeof(float);
         size_t size_C = M * N * sizeof(float);
-        
+
         // Get buffers from pool
         id<MTLBuffer> bufferA = get_pooled_buffer(size_A);
         id<MTLBuffer> bufferB = get_pooled_buffer(size_B);
         id<MTLBuffer> bufferC = get_pooled_buffer(size_C);
-        
+
         if (bufferA == nil || bufferB == nil || bufferC == nil) {
             return -2;
         }
-        
+
         // Copy data to buffers
         memcpy([bufferA contents], h_A, size_A);
         memcpy([bufferB contents], h_B, size_B);
-        
+
         // Create buffers for dimensions
         uint32_t m = M, n = N, k = K;
         id<MTLBuffer> bufferM = [device newBufferWithBytes:&m length:sizeof(uint32_t) options:MTLResourceStorageModeShared];
         id<MTLBuffer> bufferN = [device newBufferWithBytes:&n length:sizeof(uint32_t) options:MTLResourceStorageModeShared];
         id<MTLBuffer> bufferK = [device newBufferWithBytes:&k length:sizeof(uint32_t) options:MTLResourceStorageModeShared];
-        
+
         // Create command buffer and encoder
         id<MTLCommandBuffer> commandBuffer = [commandQueue commandBuffer];
         id<MTLComputeCommandEncoder> encoder = [commandBuffer computeCommandEncoder];
-        
+
         // Set the pipeline and buffers
         [encoder setComputePipelineState:pipeline];
         [encoder setBuffer:bufferA offset:0 atIndex:0];
@@ -348,11 +348,11 @@ int metal_matmul_kernel(const float* h_A, const float* h_B, float* h_C, int M, i
         [encoder setBuffer:bufferM offset:0 atIndex:3];
         [encoder setBuffer:bufferN offset:0 atIndex:4];
         [encoder setBuffer:bufferK offset:0 atIndex:5];
-        
+
         // Calculate thread groups
         MTLSize gridSize = MTLSizeMake(N, M, 1);
         NSUInteger threadGroupSize = pipeline.maxTotalThreadsPerThreadgroup;
-        
+
         if (use_tiled) {
             // For tiled kernel, use fixed tile size
             const NSUInteger TILE_SIZE = 16;
@@ -368,21 +368,21 @@ int metal_matmul_kernel(const float* h_A, const float* h_B, float* h_C, int M, i
             MTLSize threadgroupSize = MTLSizeMake(threadGroupWidth, threadGroupHeight, 1);
             [encoder dispatchThreads:gridSize threadsPerThreadgroup:threadgroupSize];
         }
-        
+
         [encoder endEncoding];
-        
+
         // Commit and wait for completion
         [commandBuffer commit];
         [commandBuffer waitUntilCompleted];
-        
+
         // Copy result back to host
         memcpy(h_C, [bufferC contents], size_C);
-        
+
         // Return buffers to pool
         return_pooled_buffer(bufferA);
         return_pooled_buffer(bufferB);
         return_pooled_buffer(bufferC);
-        
+
         return 0;
     }
 }
@@ -398,7 +398,7 @@ int metal_cleanup() {
                 bufferPool[i].in_use = 0;
             }
         });
-        
+
         matmulTiledPipeline = nil;
         matmulSimplePipeline = nil;
         library = nil;
