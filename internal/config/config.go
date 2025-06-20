@@ -45,8 +45,7 @@ type Config struct {
 	} `yaml:"proxy"`
 }
 
-func LoadConfig(homePath string) (*Config, error) {
-	configPath := filepath.Join(homePath, "config.yaml")
+func LoadConfig(configPath string) (*Config, error) {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err

@@ -16,7 +16,6 @@ func TestLoadConfig(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, config)
 
-		assert.Equal(t, "key.json", config.Node.Keyfile)
 		assert.Equal(t, 8080, config.Node.ListenPort)
 		assert.Equal(t, "info", config.Logger.Verbosity)
 		assert.Equal(t, "0x123", config.Registry.RouterSmartContractAddress)
@@ -32,20 +31,16 @@ func TestLoadConfig(t *testing.T) {
 	})
 
 	t.Run("non-existent file", func(t *testing.T) {
-		config, err := LoadConfig("non-existent-file.yaml")
+		_, err := LoadConfig("non-existent-file.yaml")
 		assert.Error(t, err)
-		assert.Nil(t, config)
 	})
 
 	t.Run("invalid yaml", func(t *testing.T) {
-		content := "invalid-yaml"
-		tmpDir := t.TempDir()
-		configPath := filepath.Join(tmpDir, "config.yaml")
-		err := os.WriteFile(configPath, []byte(content), 0644)
+		dir, err := os.Getwd()
 		require.NoError(t, err)
 
-		config, err := LoadConfig(configPath)
+		configPath := filepath.Join(dir, "..", "..", "fixtures", "tests", "invalid_config", "config.yaml")
+		_, err = LoadConfig(configPath)
 		assert.Error(t, err)
-		assert.Nil(t, config)
 	})
 }

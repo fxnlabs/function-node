@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/logger"
@@ -31,7 +32,7 @@ func main() {
 		},
 		Before: func(c *cli.Context) error {
 			var err error
-			cfg, err = config.LoadConfig(home)
+			cfg, err = config.LoadConfig(filepath.Join(home, "config.yaml"))
 			if err != nil {
 				return err
 			}

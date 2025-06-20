@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/common"
 	goethclient "github.com/ethereum/go-ethereum/ethclient"
@@ -22,7 +23,7 @@ import (
 
 func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
 	rootLogger := log.Named("node")
-	modelBackendConfig, err := config.LoadModelBackendConfig(configHomePath)
+	modelBackendConfig, err := config.LoadModelBackendConfig(filepath.Join(configHomePath, "model_backend.yaml"))
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
