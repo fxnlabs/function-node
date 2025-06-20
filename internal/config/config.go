@@ -34,7 +34,6 @@ type Config struct {
 	} `yaml:"registry"`
 	RpcProvider      string `yaml:"rpcProvider"`
 	SchedulerAddress string `yaml:"schedulerAddress"`
-	ModelBackendPath string `yaml:"modelBackendPath"`
 	NonceCache       struct {
 		TTL             time.Duration `yaml:"ttl"`
 		CleanupInterval time.Duration `yaml:"cleanupInterval"`

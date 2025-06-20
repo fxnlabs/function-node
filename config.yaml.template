@@ -12,7 +12,6 @@ registry:
     pollInterval: "1m"
 rpcProvider: "https://devnet-rpc.function.network"
 schedulerAddress: "0x9EC5501b7db525648C46098CCe1Df11EbBA9c16a"
-modelBackendPath: "model_backend.yaml"
 nonceCache:
   ttl: "5m"
   cleanupInterval: "10m"

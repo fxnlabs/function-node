@@ -23,7 +23,6 @@ func TestLoadConfig(t *testing.T) {
 		assert.Equal(t, 15*time.Second, config.Registry.Provider.PollInterval)
 		assert.Equal(t, "http://localhost:8545", config.RpcProvider)
 		assert.Equal(t, "0x456", config.SchedulerAddress)
-		assert.Equal(t, "model_backend.yaml", config.ModelBackendPath)
 		assert.Equal(t, 1*time.Minute, config.NonceCache.TTL)
 		assert.Equal(t, 30*time.Second, config.NonceCache.CleanupInterval)
 		assert.Equal(t, 50, config.Proxy.MaxIdleConns)
