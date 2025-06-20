@@ -30,8 +30,8 @@ type ModelExtractor struct {
 	Model string `json:"model"`
 }
 
-func LoadModelBackendConfig(path string) (*ModelBackendConfig, error) {
-	data, err := os.ReadFile(path)
+func LoadModelBackendConfig(configPath string) (*ModelBackendConfig, error) {
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}

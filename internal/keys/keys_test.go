@@ -13,10 +13,11 @@ import (
 )
 
 func TestGenerateKeyFile(t *testing.T) {
-	tempDir := t.TempDir()
-	keyFilePath := filepath.Join(tempDir, "key.json")
+	dir, err := os.Getwd()
+	require.NoError(t, err)
 
-	err := GenerateKeyFile(keyFilePath)
+	keyFilePath := filepath.Join(dir, "..", "..", "fixtures", "tests", "keys", "key.json")
+	err = GenerateKeyFile(keyFilePath)
 	require.NoError(t, err)
 
 	assert.FileExists(t, keyFilePath)
@@ -46,14 +47,11 @@ func TestGenerateKeyFile(t *testing.T) {
 }
 
 func TestLoadPrivateKey(t *testing.T) {
-	tempDir := t.TempDir()
-	keyFilePath := filepath.Join(tempDir, "key.json")
-
-	// Generate a key file to use for testing
-	err := GenerateKeyFile(keyFilePath)
+	dir, err := os.Getwd()
 	require.NoError(t, err)
 
 	t.Run("successful load", func(t *testing.T) {
+		keyFilePath := filepath.Join(dir, "..", "..", "fixtures", "tests", "keys", "key.json")
 		privateKey, address, err := LoadPrivateKey(keyFilePath)
 		require.NoError(t, err)
 		assert.NotNil(t, privateKey)
@@ -61,31 +59,18 @@ func TestLoadPrivateKey(t *testing.T) {
 	})
 
 	t.Run("file not found", func(t *testing.T) {
-		_, _, err := LoadPrivateKey(filepath.Join(tempDir, "nonexistent.json"))
+		_, _, err := LoadPrivateKey("nonexistent.json")
 		assert.Error(t, err)
 	})
 
 	t.Run("malformed json", func(t *testing.T) {
-		malformedJSONPath := filepath.Join(tempDir, "malformed.json")
-		err := os.WriteFile(malformedJSONPath, []byte("{"), 0600)
-		require.NoError(t, err)
-
+		malformedJSONPath := filepath.Join(dir, "..", "..", "fixtures", "tests", "keys", "malformed.json")
 		_, _, err = LoadPrivateKey(malformedJSONPath)
 		assert.Error(t, err)
 	})
 
 	t.Run("invalid private key", func(t *testing.T) {
-		invalidKeyPath := filepath.Join(tempDir, "invalid_key.json")
-		keyFile := KeyFile{
-			PublicKey:  "04abc",
-			Address:    "0x123",
-			PrivateKey: "invalid",
-		}
-		data, err := json.Marshal(keyFile)
-		require.NoError(t, err)
-		err = os.WriteFile(invalidKeyPath, data, 0600)
-		require.NoError(t, err)
-
+		invalidKeyPath := filepath.Join(dir, "..", "..", "fixtures", "tests", "keys", "invalid_key.json")
 		_, _, err = LoadPrivateKey(invalidKeyPath)
 		assert.Error(t, err)
 	})

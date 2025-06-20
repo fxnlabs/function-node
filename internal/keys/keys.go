@@ -15,8 +15,8 @@ type KeyFile struct {
 	PrivateKey string `json:"private_key"`
 }
 
-func LoadPrivateKey(keyfile string) (*ecdsa.PrivateKey, common.Address, error) {
-	data, err := os.ReadFile(keyfile)
+func LoadPrivateKey(keyfilePath string) (*ecdsa.PrivateKey, common.Address, error) {
+	data, err := os.ReadFile(keyfilePath)
 	if err != nil {
 		return nil, common.Address{}, err
 	}
@@ -42,7 +42,7 @@ func LoadPrivateKey(keyfile string) (*ecdsa.PrivateKey, common.Address, error) {
 	return privateKey, address, nil
 }
 
-func GenerateKeyFile(path string) error {
+func GenerateKeyFile(keyfilePath string) error {
 	privateKey, err := crypto.GenerateKey()
 	if err != nil {
 		return err
@@ -68,5 +68,5 @@ func GenerateKeyFile(path string) error {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0600)
+	return os.WriteFile(keyfilePath, data, 0600)
 }

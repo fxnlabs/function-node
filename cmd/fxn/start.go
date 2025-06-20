@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/common"
 	goethclient "github.com/ethereum/go-ethereum/ethclient"
@@ -20,14 +21,14 @@ import (
 	"go.uber.org/zap"
 )
 
-func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
+func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
 	rootLogger := log.Named("node")
-	modelBackendConfig, err := config.LoadModelBackendConfig(cfg.ModelBackendPath)
+	modelBackendConfig, err := config.LoadModelBackendConfig(filepath.Join(configHomePath, "model_backend.yaml"))
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
 
-	privateKey, _, err := keys.LoadPrivateKey(cfg.Node.Keyfile)
+	privateKey, _, err := keys.LoadPrivateKey(configHomePath)
 	if err != nil {
 		rootLogger.Fatal("failed to load private key", zap.Error(err))
 	}
@@ -66,11 +67,15 @@ func startNode(cfg *config.Config, ethClient ethclient.EthClient, router contrac
 	return nil
 }
 
-func startCommand(log *zap.Logger, cfg *config.Config) *cli.Command {
+func startCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "start",
 		Usage: "Start the function node",
 		Action: func(c *cli.Context) error {
+			log := c.App.Metadata["logger"].(*zap.Logger)
+			cfg := c.App.Metadata["cfg"].(*config.Config)
+			homeDir := c.App.Metadata["homeDir"].(string)
+
 			// Initialize Ethereum client
 			ethClient, err := goethclient.Dial(cfg.RpcProvider)
 			if err != nil {
@@ -101,7 +106,7 @@ func startCommand(log *zap.Logger, cfg *config.Config) *cli.Command {
 				log.Fatal("failed to initialize provider registry", zap.Error(err))
 			}
 
-			return startNode(cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
+			return startNode(homeDir, cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
 		},
 	}
 }

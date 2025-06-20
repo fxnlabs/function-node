@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +13,7 @@ import (
 
 func TestLoadModelBackendConfig(t *testing.T) {
 	t.Run("valid config", func(t *testing.T) {
-		config, err := LoadModelBackendConfig("../../fixtures/tests/config/model_backend.yaml")
+		config, err := LoadModelBackendConfig("../../fixtures/tests/config/valid_model_backend.yaml")
 		require.NoError(t, err)
 		require.NotNil(t, config)
 
@@ -41,13 +39,7 @@ func TestLoadModelBackendConfig(t *testing.T) {
 	})
 
 	t.Run("invalid yaml", func(t *testing.T) {
-		content := "invalid-yaml"
-		tmpDir := t.TempDir()
-		configPath := filepath.Join(tmpDir, "config.yaml")
-		err := os.WriteFile(configPath, []byte(content), 0644)
-		require.NoError(t, err)
-
-		config, err := LoadModelBackendConfig(configPath)
+		config, err := LoadModelBackendConfig("../../fixtures/tests/invalid_config/config.yaml")
 		assert.Error(t, err)
 		assert.Nil(t, config)
 	})
@@ -55,7 +47,7 @@ func TestLoadModelBackendConfig(t *testing.T) {
 
 func TestGetModelBackend(t *testing.T) {
 	log := zap.NewNop()
-	config, err := LoadModelBackendConfig("../../fixtures/tests/config/model_backend.yaml")
+	config, err := LoadModelBackendConfig("../../fixtures/tests/config/valid_model_backend.yaml")
 	require.NoError(t, err)
 
 	t.Run("valid model in request", func(t *testing.T) {

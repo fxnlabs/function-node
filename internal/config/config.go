@@ -2,15 +2,23 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
+func GetDefaultConfigHome() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+	return filepath.Join(home, ".fxn")
+}
+
 type Config struct {
 	Node struct {
-		Keyfile    string `yaml:"keyfile"`
-		ListenPort int    `yaml:"listenPort"`
+		ListenPort int `yaml:"listenPort"`
 	} `yaml:"node"`
 	Logger struct {
 		Verbosity string `yaml:"verbosity"`
@@ -26,7 +34,6 @@ type Config struct {
 	} `yaml:"registry"`
 	RpcProvider      string `yaml:"rpcProvider"`
 	SchedulerAddress string `yaml:"schedulerAddress"`
-	ModelBackendPath string `yaml:"modelBackendPath"`
 	NonceCache       struct {
 		TTL             time.Duration `yaml:"ttl"`
 		CleanupInterval time.Duration `yaml:"cleanupInterval"`
@@ -37,8 +44,8 @@ type Config struct {
 	} `yaml:"proxy"`
 }
 
-func LoadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+func LoadConfig(configPath string) (*Config, error) {
+	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}
