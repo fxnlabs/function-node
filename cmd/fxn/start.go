@@ -74,10 +74,7 @@ func startCommand() *cli.Command {
 			log := c.App.Metadata["logger"].(*zap.Logger)
 			cfg := c.App.Metadata["cfg"].(*config.Config)
 			homeDir := c.App.Metadata["homeDir"].(string)
-			cfg, err := config.LoadConfig(homeDir)
-			if err != nil {
-				log.Fatal("failed to load config", zap.Error(err))
-			}
+
 			// Initialize Ethereum client
 			ethClient, err := goethclient.Dial(cfg.RpcProvider)
 			if err != nil {
