@@ -12,8 +12,6 @@ import (
 	"github.com/fxnlabs/function-node/internal/contracts"
 	"github.com/fxnlabs/function-node/internal/keys"
 	"github.com/fxnlabs/function-node/internal/metrics"
-
-	// "github.com/fxnlabs/function-node/internal/metrics" // Already imported for metrics.EndpointResponses
 	"github.com/fxnlabs/function-node/internal/openai"
 	"github.com/fxnlabs/function-node/internal/registry"
 	"github.com/fxnlabs/function-node/pkg/ethclient"
