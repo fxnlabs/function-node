@@ -20,13 +20,19 @@ cuda-compile:
 # Build with Metal support (macOS only)
 metal: metal-compile
 	@echo "Building with Metal support..."
+	@echo "Metal library compiled, now building Go binary with embedded shader..."
 	CGO_ENABLED=1 \
 	go build -tags metal -o fxn github.com/fxnlabs/function-node/cmd/fxn
 
 # Compile Metal sources and shaders
 metal-compile:
 	@echo "Compiling Metal backend..."
-	$(MAKE) -C metal all
+	@if [ ! -f metal/lib/matmul.metallib ]; then \
+		echo "Metal library not found, compiling..."; \
+		$(MAKE) -C metal all; \
+	else \
+		echo "Metal library already exists. Run 'make clean' to rebuild."; \
+	fi
 
 # Build with CPU fallback (no GPU)
 cpu:

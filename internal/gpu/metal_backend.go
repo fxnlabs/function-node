@@ -14,6 +14,8 @@ import (
 	"log/slog"
 	"runtime"
 	"unsafe"
+	
+	"github.com/fxnlabs/function-node/metal"
 )
 
 // MetalBackend implements GPUBackend using Apple Metal
@@ -56,10 +58,27 @@ func (m *MetalBackend) Initialize() error {
 	
 	m.logger.Debug("Initializing Metal backend")
 	
-	// Initialize Metal context
-	result := C.metal_init()
+	// Try to initialize with embedded library first
+	embeddedLib := metal.GetMetalLib()
+	var result C.int
+	
+	if len(embeddedLib) > 0 {
+		m.logger.Debug("Attempting to load Metal library from embedded data", "size", len(embeddedLib))
+		result = C.metal_init_with_embedded_lib(unsafe.Pointer(&embeddedLib[0]), C.size_t(len(embeddedLib)))
+		if result == 0 {
+			m.logger.Info("Successfully loaded Metal library from embedded data")
+		} else {
+			m.logger.Warn("Failed to load embedded Metal library, falling back to file loading", "error_code", result)
+		}
+	}
+	
+	// Fall back to file-based loading if embedded loading failed
 	if result != 0 {
-		return fmt.Errorf("failed to initialize Metal: error code %d", result)
+		m.logger.Debug("Loading Metal library from file")
+		result = C.metal_init()
+		if result != 0 {
+			return fmt.Errorf("failed to initialize Metal: error code %d", result)
+		}
 	}
 	
 	// Get device information

@@ -67,6 +67,68 @@ void return_pooled_buffer(id<MTLBuffer> buffer) {
     });
 }
 
+// Helper function to initialize pipelines from loaded library
+static int metal_init_pipelines() {
+    NSError *error = nil;
+    
+    // Create simple pipeline
+    id<MTLFunction> matmulSimpleFunction = [library newFunctionWithName:@"matmul_simple"];
+    if (matmulSimpleFunction == nil) {
+        return -4;
+    }
+
+    matmulSimplePipeline = [device newComputePipelineStateWithFunction:matmulSimpleFunction error:&error];
+    if (matmulSimplePipeline == nil) {
+        NSLog(@"Failed to create simple pipeline: %@", error);
+        return -5;
+    }
+
+    // Create tiled pipeline if available
+    id<MTLFunction> matmulTiledFunction = [library newFunctionWithName:@"matmul_tiled"];
+    if (matmulTiledFunction != nil) {
+        matmulTiledPipeline = [device newComputePipelineStateWithFunction:matmulTiledFunction error:&error];
+    }
+
+    return 0;
+}
+
+// Initialize Metal device with embedded library data
+int metal_init_with_embedded_lib(const void* lib_data, size_t lib_size) {
+    @autoreleasepool {
+        device = MTLCreateSystemDefaultDevice();
+        if (device == nil) {
+            return -1;
+        }
+
+        commandQueue = [device newCommandQueue];
+        if (commandQueue == nil) {
+            return -2;
+        }
+
+        // Initialize buffer pool queue
+        bufferPoolQueue = dispatch_queue_create("com.fxnlabs.metal.bufferpool", DISPATCH_QUEUE_SERIAL);
+
+        // Create the compute pipeline for matrix multiplication
+        NSError *error = nil;
+
+        // Load library from embedded data
+        if (lib_data != NULL && lib_size > 0) {
+            // Create dispatch_data_t from the embedded data
+            dispatch_data_t libraryData = dispatch_data_create(lib_data, lib_size, NULL, DISPATCH_DATA_DESTRUCTOR_DEFAULT);
+            library = [device newLibraryWithData:libraryData error:&error];
+            if (library != nil) {
+                NSLog(@"Loaded Metal library from embedded data (%zu bytes)", lib_size);
+                return metal_init_pipelines();
+            } else {
+                NSLog(@"Failed to load Metal library from embedded data: %@", error);
+            }
+        }
+
+        NSLog(@"Error: No embedded Metal library data provided");
+        return -3;
+    }
+}
+
 // Initialize Metal device and resources
 int metal_init() {
     @autoreleasepool {
@@ -125,25 +187,7 @@ int metal_init() {
             return -3;
         }
 
-        // Create simple pipeline
-        id<MTLFunction> matmulSimpleFunction = [library newFunctionWithName:@"matmul_simple"];
-        if (matmulSimpleFunction == nil) {
-            return -4;
-        }
-
-        matmulSimplePipeline = [device newComputePipelineStateWithFunction:matmulSimpleFunction error:&error];
-        if (matmulSimplePipeline == nil) {
-            NSLog(@"Failed to create simple pipeline: %@", error);
-            return -5;
-        }
-
-        // Create tiled pipeline if available
-        id<MTLFunction> matmulTiledFunction = [library newFunctionWithName:@"matmul_tiled"];
-        if (matmulTiledFunction != nil) {
-            matmulTiledPipeline = [device newComputePipelineStateWithFunction:matmulTiledFunction error:&error];
-        }
-
-        return 0;
+        return metal_init_pipelines();
     }
 }
 

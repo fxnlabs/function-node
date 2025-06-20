@@ -19,6 +19,9 @@ typedef struct {
 // Initialize Metal device and resources
 int metal_init(void);
 
+// Initialize Metal device with embedded library data
+int metal_init_with_embedded_lib(const void* lib_data, size_t lib_size);
+
 // Check if Metal is available
 int metal_check_device(void);
 
