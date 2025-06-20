@@ -3,19 +3,16 @@ package contracts
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/fxnlabs/function-node/fixtures"
 	"github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
-const (
-	DefaultRouterABIPath = "fixtures/abi/Router.json"
-)
 
 type Router interface {
 	GetGatewayRegistryAddress() (common.Address, error)
@@ -29,12 +26,9 @@ type RouterImpl struct {
 	logger          *zap.Logger
 }
 
-func NewRouter(client ethclient.EthClient, contractAddress common.Address, logger *zap.Logger, abiPath string) (*RouterImpl, error) {
-	abiBytes, err := os.ReadFile(abiPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read Router ABI file: %w", err)
-	}
-	routerABIString := string(abiBytes)
+func NewRouter(client ethclient.EthClient, contractAddress common.Address, logger *zap.Logger) (*RouterImpl, error) {
+	// Use embedded ABI instead of reading from file
+	routerABIString := fixtures.RouterABI
 
 	parsedABI, err := abi.JSON(strings.NewReader(routerABIString))
 	if err != nil {

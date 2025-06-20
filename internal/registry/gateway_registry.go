@@ -4,21 +4,18 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/fxnlabs/function-node/fixtures"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
 	"github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
-const (
-	GatewayRegistryABIPath = "fixtures/abi/GatewayRegistry.json"
-)
 
 // Gateway represents the structure of a gateway in the registry
 type Gateway struct {
@@ -35,14 +32,9 @@ func NewGatewayRegistry(
 	cfg *config.Config,
 	logger *zap.Logger,
 	router contracts.Router,
-	abiPath string,
 ) (*CachedRegistry, error) {
-	// Load ABI content from file
-	abiBytes, err := os.ReadFile(abiPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read GatewayRegistry ABI file: %w", err)
-	}
-	gatewayRegistryABIString := string(abiBytes)
+	// Use embedded ABI instead of reading from file
+	gatewayRegistryABIString := fixtures.GatewayRegistryABI
 
 	parsedABI, err := abi.JSON(strings.NewReader(gatewayRegistryABIString))
 	if err != nil {

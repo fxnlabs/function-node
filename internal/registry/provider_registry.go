@@ -4,19 +4,18 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"os"
 	"strings"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/fxnlabs/function-node/fixtures"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
 	"github.com/fxnlabs/function-node/pkg/ethclient"
 	"go.uber.org/zap"
 )
 
-const ProviderRegistryABIPath = "fixtures/abi/ProviderRegistry.json"
 
 // Provider represents the structure of a provider in the registry.
 type Provider struct {
@@ -34,20 +33,13 @@ func NewProviderRegistry(
 	cfg *config.Config,
 	logger *zap.Logger,
 	router contracts.Router,
-	abiPath string,
 ) (*CachedRegistry, error) {
-	var parsedABI abi.ABI
-	var err error
-	abiBytes, err := os.ReadFile(abiPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read ProviderRegistry ABI file: %w", err)
-	}
-	providerRegistryABIJson := string(abiBytes)
-
+	// Use embedded ABI instead of reading from file
+	providerRegistryABIJson := fixtures.ProviderRegistryABI
 	if providerRegistryABIJson == "" {
 		return nil, fmt.Errorf("ProviderRegistry ABI JSON is empty")
 	}
-	parsedABI, err = abi.JSON(strings.NewReader(providerRegistryABIJson))
+	parsedABI, err := abi.JSON(strings.NewReader(providerRegistryABIJson))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse ProviderRegistry ABI: %w", err)
 	}
