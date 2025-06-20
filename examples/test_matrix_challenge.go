@@ -24,12 +24,12 @@ type BenchmarkResult struct {
 func generateMatrices(size int) ([]float32, []float32) {
 	a := make([]float32, size*size)
 	b := make([]float32, size*size)
-	
+
 	for i := 0; i < size*size; i++ {
 		a[i] = float32(i%100) * 0.01
 		b[i] = float32((i*2+1)%100) * 0.01
 	}
-	
+
 	return a, b
 }
 
@@ -43,9 +43,9 @@ func calculateGFLOPS(size int, duration time.Duration) float64 {
 
 func runBenchmark(backend gpu.GPUBackend, size int, iterations int) (time.Duration, error) {
 	a, b := generateMatrices(size)
-	
+
 	var totalDuration time.Duration
-	
+
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
 		_, err := backend.MatrixMultiply(a, b, size, size, size)
@@ -54,7 +54,7 @@ func runBenchmark(backend gpu.GPUBackend, size int, iterations int) (time.Durati
 		}
 		totalDuration += time.Since(start)
 	}
-	
+
 	return totalDuration / time.Duration(iterations), nil
 }
 
@@ -62,23 +62,23 @@ func printBenchmarkTable(results []BenchmarkResult) {
 	fmt.Println("\n" + strings.Repeat("=", 80))
 	fmt.Println("                        MATRIX MULTIPLICATION BENCHMARK")
 	fmt.Println(strings.Repeat("=", 80))
-	fmt.Printf("│ %-8s │ %-12s │ %-12s │ %-12s │ %-12s │\n", 
+	fmt.Printf("│ %-8s │ %-12s │ %-12s │ %-12s │ %-12s │\n",
 		"Size", "Backend", "Time (ms)", "GFLOPS", "Speedup")
 	fmt.Println("├──────────┼──────────────┼──────────────┼──────────────┼──────────────┤")
-	
+
 	// Group results by size for speedup calculation
 	sizeGroups := make(map[int][]BenchmarkResult)
 	for _, result := range results {
 		sizeGroups[result.Size] = append(sizeGroups[result.Size], result)
 	}
-	
+
 	// Sort backends for consistent display order
 	backendOrder := []string{"CPU", "CUDA", "Metal"}
-	
+
 	for _, size := range []int{256, 512, 1024} {
 		if group, exists := sizeGroups[size]; exists {
 			var cpuTime time.Duration
-			
+
 			// Find CPU baseline time
 			for _, result := range group {
 				if result.Backend == "CPU" {
@@ -86,13 +86,13 @@ func printBenchmarkTable(results []BenchmarkResult) {
 					break
 				}
 			}
-			
+
 			// Create a map for quick lookup
 			resultMap := make(map[string]BenchmarkResult)
 			for _, result := range group {
 				resultMap[result.Backend] = result
 			}
-			
+
 			// Display results in consistent order
 			displayed := false
 			for _, backend := range backendOrder {
@@ -105,16 +105,16 @@ func printBenchmarkTable(results []BenchmarkResult) {
 					} else {
 						speedup = "N/A"
 					}
-					
+
 					if !displayed {
 						fmt.Printf("│ %-8d │ %-12s │ %9.2f ms │ %9.2f    │ %-12s │\n",
-							result.Size, result.Backend, 
+							result.Size, result.Backend,
 							float64(result.Duration.Nanoseconds())/1e6,
 							result.GFLOPS, speedup)
 						displayed = true
 					} else {
 						fmt.Printf("│ %-8s │ %-12s │ %9.2f ms │ %9.2f    │ %-12s │\n",
-							"", result.Backend, 
+							"", result.Backend,
 							float64(result.Duration.Nanoseconds())/1e6,
 							result.GFLOPS, speedup)
 					}
@@ -195,7 +195,7 @@ func main() {
 	// Initialize GPU backends
 	fmt.Println("\n🔧 Initializing Backends")
 	fmt.Println("────────────────────────")
-	
+
 	// Create a silent logger for cleaner output
 	silentLogger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 	gpuManager, err := gpu.NewManager(silentLogger)
@@ -203,19 +203,19 @@ func main() {
 		fmt.Printf("⚠️  Failed to initialize GPU manager: %v\n", err)
 		return
 	}
-	
+
 	// Test with different matrix sizes
 	sizes := []int{256, 512, 1024}
 	iterations := 3
-	
+
 	var results []BenchmarkResult
-	
+
 	fmt.Println("\n⏱️  Running Benchmarks")
 	fmt.Println("─────────────────────")
-	
+
 	for _, size := range sizes {
 		fmt.Printf("Testing %dx%d matrices...\n", size, size)
-		
+
 		// Test CPU backend
 		cpuBackend := gpu.NewCPUBackend(silentLogger)
 		cpuBackend.Initialize()
@@ -232,13 +232,13 @@ func main() {
 				GFLOPS:   calculateGFLOPS(size, cpuDuration),
 			})
 		}
-		
+
 		// Detect backend type from manager
 		currentBackend := gpuManager.GetBackend()
 		backendType := gpuManager.GetBackendType()
-		
+
 		// Test CUDA backend if available
-		if backendType == "cuda" || backendType == "metal_cuda" {
+		if backendType == "cuda" {
 			fmt.Printf("  Running CUDA benchmark... ")
 			gpuDuration, err := runBenchmark(currentBackend, size, iterations)
 			if err != nil {
@@ -253,14 +253,14 @@ func main() {
 				})
 			}
 		}
-		
+
 		// Test Metal backend if available
-		if backendType == "metal" || backendType == "metal_cuda" {
+		if backendType == "metal" {
 			// For metal_cuda, we need to test the Metal part separately
 			var metalBackend gpu.GPUBackend
-			if backendType == "metal_cuda" {
+			if backendType == "metal" {
 				// Create a separate Metal backend for testing
-				metalBackend = gpu.NewMetalBackend(silentLogger)
+				metalBackend = gpu.NewGPUBackend(silentLogger)
 				if err := metalBackend.Initialize(); err != nil {
 					fmt.Printf("  Running Metal benchmark... ❌ Initialization failed: %v\n", err)
 					metalBackend = nil
@@ -268,7 +268,7 @@ func main() {
 			} else {
 				metalBackend = currentBackend
 			}
-			
+
 			if metalBackend != nil {
 				fmt.Printf("  Running Metal benchmark... ")
 				metalDuration, err := runBenchmark(metalBackend, size, iterations)
@@ -283,9 +283,9 @@ func main() {
 						GFLOPS:   calculateGFLOPS(size, metalDuration),
 					})
 				}
-				
+
 				// Clean up if we created a separate Metal backend
-				if backendType == "metal_cuda" {
+				if backendType == "metal" {
 					metalBackend.Cleanup()
 				}
 			}
@@ -293,7 +293,7 @@ func main() {
 			fmt.Printf("  ⚠️  GPU acceleration not available - only CPU backend found\n")
 		}
 	}
-	
+
 	// Print benchmark results table
 	if len(results) > 0 {
 		printBenchmarkTable(results)
@@ -302,25 +302,25 @@ func main() {
 	// Demonstrate the challenge system with a small example
 	fmt.Println("🎯 Challenge System Demo")
 	fmt.Println("────────────────────────")
-	
+
 	matrixChallenger, _ := challenge.NewChallenger("MATRIX_MULTIPLICATION", privateKey)
-	
+
 	// Test with specific small matrices to verify correctness
 	fmt.Println("\nTesting 2x2 matrix multiplication:")
 	fmt.Println("A = [[1, 2], [3, 4]]")
 	fmt.Println("B = [[5, 6], [7, 8]]")
 	fmt.Println("Expected: C = [[19, 22], [43, 50]]")
-	
+
 	payloadSpecific := map[string]interface{}{
-		"size": 2,
+		"size":    2,
 		"matrixA": [][]float64{{1, 2}, {3, 4}},
 		"matrixB": [][]float64{{5, 6}, {7, 8}},
 	}
-	
+
 	start := time.Now()
 	respSpecific, err := matrixChallenger.Execute(payloadSpecific, logger)
 	duration := time.Since(start)
-	
+
 	if err != nil {
 		fmt.Printf("❌ Error: %v\n", err)
 	} else {
@@ -338,6 +338,6 @@ func main() {
 			}
 		}
 	}
-	
+
 	fmt.Println("\n🏁 Demo completed!")
 }

@@ -9,6 +9,7 @@ This document describes the Apple Metal GPU backend implementation for the Funct
 The Metal backend provides two matrix multiplication implementations:
 
 1. **Custom Metal Kernels** - For small to medium matrices (<512×512 by default)
+
    - Simple kernel for very small matrices
    - Tiled kernel with shared memory optimization for medium matrices
    - Lower overhead for frequent small operations
@@ -48,7 +49,7 @@ The Metal backend provides two matrix multiplication implementations:
 make metal
 
 # Compile Metal shaders to metallib (optional, for better performance)
-make metal-shaders
+make metal-compile
 
 # Check Metal availability
 make check-metal
@@ -78,13 +79,13 @@ backend.SetMPSThreshold(256) // Use MPS for matrices ≥ 256×256
 
 Expected performance on different Apple Silicon chips:
 
-| Chip | Matrix Size | Custom Kernel | MPS | 
-|------|------------|---------------|-----|
-| M1 | 512×512 | ~400 GFLOPS | ~600 GFLOPS |
-| M1 | 1024×1024 | ~500 GFLOPS | ~800 GFLOPS |
-| M1 Pro | 1024×1024 | ~600 GFLOPS | ~1200 GFLOPS |
-| M2 Max | 1024×1024 | ~720 GFLOPS | ~1500 GFLOPS |
-| M3 Max | 1024×1024 | ~850 GFLOPS | ~1800 GFLOPS |
+| Chip   | Matrix Size | Custom Kernel | MPS          |
+| ------ | ----------- | ------------- | ------------ |
+| M1     | 512×512     | ~400 GFLOPS   | ~600 GFLOPS  |
+| M1     | 1024×1024   | ~500 GFLOPS   | ~800 GFLOPS  |
+| M1 Pro | 1024×1024   | ~600 GFLOPS   | ~1200 GFLOPS |
+| M2 Max | 1024×1024   | ~720 GFLOPS   | ~1500 GFLOPS |
+| M3 Max | 1024×1024   | ~850 GFLOPS   | ~1800 GFLOPS |
 
 ## Testing
 
@@ -126,7 +127,7 @@ internal/gpu/
 The implementation uses CGO to bridge between Go and Objective-C/Metal:
 
 1. **Initialization**: Creates Metal device, command queue, and compiles shaders
-2. **Buffer Management**: Pool-based allocation for efficient memory reuse  
+2. **Buffer Management**: Pool-based allocation for efficient memory reuse
 3. **Kernel Dispatch**: Automatic selection between custom kernels and MPS
 4. **Error Handling**: Comprehensive error checking and reporting
 
@@ -144,10 +145,12 @@ The `matmul.metal` file contains optimized kernels:
 ### Common Issues
 
 1. **"Metal device not available"**
+
    - Ensure you're running on macOS 11.0 or later
    - Check that your Mac has a Metal-capable GPU
 
 2. **Performance lower than expected**
+
    - Verify you're using the release build (`-tags metal`)
    - Check if thermal throttling is occurring
    - Try adjusting the MPS threshold
@@ -169,11 +172,13 @@ export LOG_LEVEL=debug
 ## Future Enhancements
 
 1. **Extended Operations**
+
    - Convolution operations for ML challenges
    - FFT operations for signal processing
    - Custom kernels for specific workloads
 
 2. **Advanced Optimizations**
+
    - Vectorized kernels using float4 operations
    - Persistent kernel optimization
    - Graph-based computation for multiple operations
