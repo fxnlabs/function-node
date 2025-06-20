@@ -28,7 +28,7 @@ func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.Et
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
 
-	privateKey, _, err := keys.LoadPrivateKey(configHomePath)
+	privateKey, _, err := keys.LoadPrivateKey(filepath.Join(configHomePath, "nodekey.json"))
 	if err != nil {
 		rootLogger.Fatal("failed to load private key", zap.Error(err))
 	}
