@@ -1,7 +1,6 @@
 # .goreleaser.yml
 version: 2
 
-# 1. Tell goreleaser where to publish your GitHub release
 release:
   github:
     owner: fxnlabs
@@ -22,7 +21,6 @@ builds:
       - amd64
       - arm64
 
-# 2. Package your binary + docs into a tar.gz
 archives:
   - id: fxn-archive
     builds:
@@ -32,15 +30,12 @@ archives:
       - README.md
       - LICENSE
 
-# checksum of all archives
 checksum:
   name_template: checksums.txt
 
-# snapshot naming for pre-releases
 snapshot:
   name_template: "{{ .Version }}-next"
 
-# auto-generate changelog from commits
 changelog:
   sort: asc
   filters:
@@ -48,12 +43,12 @@ changelog:
       - '^docs:'
       - '^test:'
 
-# 3. Homebrew formula (legacy 'brews') into fxnlabs/homebrew-tap
 brews:
-  - name: fxn
-    tap:
+  - github:
       owner: fxnlabs
       name: homebrew-tap
+    folder: Formula
+    name: fxn
     homepage: https://github.com/fxnlabs/function-node
     description: Function Node is the core software for providers.
     license: MIT
