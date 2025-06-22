@@ -41,7 +41,7 @@ func main() {
 
 	// Test MATRIX_MULTIPLICATION challenge
 	matrixChallenger := challengers.NewMatrixMultiplicationChallenger()
-	
+
 	// Test 1: Small matrix (256x256)
 	fmt.Println("=== Testing MATRIX_MULTIPLICATION Challenge (256x256) ===")
 	payload256 := json.RawMessage(`{"size": 256}`)
@@ -49,7 +49,7 @@ func main() {
 		Type:    "MATRIX_MULTIPLICATION",
 		Payload: payload256,
 	}
-	
+
 	resp256, err := matrixChallenger.Execute(req256.Payload, logger)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -65,7 +65,7 @@ func main() {
 		Type:    "MATRIX_MULTIPLICATION",
 		Payload: payload1024,
 	}
-	
+
 	resp1024, err := matrixChallenger.Execute(req1024.Payload, logger)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
@@ -84,7 +84,7 @@ func main() {
 		Type:    "MATRIX_MULTIPLICATION",
 		Payload: payloadSpecific,
 	}
-	
+
 	respSpecific, err := matrixChallenger.Execute(reqSpecific.Payload, logger)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
