@@ -108,7 +108,7 @@ jobs:
           version: latest
           args: build --clean --snapshot
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: goreleaser-dist-${{ matrix.os }}
           path: dist
@@ -126,7 +126,7 @@ jobs:
         with:
           go-version: 1.23.0
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: dist
       - name: Move artifacts
