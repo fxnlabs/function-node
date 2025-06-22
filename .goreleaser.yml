@@ -1,0 +1,42 @@
+# .goreleaser.yml
+# Make sure this is in the root of your repository.
+# Visit https://goreleaser.com/customization/ for more options.
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - id: "fxn"
+    main: ./cmd/fxn
+    binary: fxn
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+archives:
+  - id: fxn-archive
+    builds:
+      - fxn
+    format: tar.gz
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+brews:
+  - name: fxn
+    tap:
+      owner: fxnlabs
+      name: homebrew-tap
+    commit_author:
+      name: goreleaser
+      email: bot@goreleaser.com
+    homepage: "https://github.com/fxnlabs/function-node"
+    description: "Function Node is the core software for providers."
+    license: "MIT" # Or your project's license
