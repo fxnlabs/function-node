@@ -23,9 +23,9 @@ builds:
 
 archives:
   - id: fxn-archive
-    builds:
-      - fxn
-    format: tar.gz
+    ids: ["fxn"]
+    formats: 
+      - tar.gz
     files:
       - README.md
       - LICENSE
@@ -34,7 +34,7 @@ checksum:
   name_template: checksums.txt
 
 snapshot:
-  name_template: "{{ .Version }}-next"
+  version_template: "{{ .Version }}-next"
 
 changelog:
   sort: asc
@@ -43,12 +43,12 @@ changelog:
       - '^docs:'
       - '^test:'
 
-brews:
-  - github:
+homebrew_casks:
+  - name: fxn
+    repository:
       owner: fxnlabs
       name: homebrew-tap
-    folder: Formula
-    name: fxn
+    directory: Casks
     homepage: https://github.com/fxnlabs/function-node
     description: Function Node is the core software for providers.
     license: MIT
