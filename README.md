@@ -21,6 +21,30 @@ The Function Node is the core software for providers on the Function Network, a 
 - Access to Ethereum RPC endpoint
 - OpenAI-compatible LLM backend(s)
 
+## Installation
+
+### Homebrew (macOS)
+
+You can install the `fxn` command-line tool using Homebrew.
+
+1.  **Tap the repository:**
+
+    ```bash
+    brew tap fxnlabs/homebrew-tap
+    ```
+
+2.  **Install `fxn`:**
+
+    ```bash
+    brew install fxn
+    ```
+
+3.  **Upgrade `fxn`:**
+
+    ```bash
+    brew upgrade fxn
+    ```
+
 ## Quick Start
 
 1.  **Run the Node:**
