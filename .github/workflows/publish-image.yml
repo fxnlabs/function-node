@@ -87,7 +87,6 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-binaries:
-    needs: [build-nocuda, build-cuda]
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
