@@ -25,7 +25,7 @@ The Function Node is the core software for providers on the Function Network, a 
 
 1.  **Run the Node:**
 
-    Start the node software. When you run the node for the first time, it will automatically generate the default `config.yaml`, `model_backend.yaml`, and `nodekey.json` files for you.
+    Start the node software. When you run the node for the first time, it will automatically generate the default `config.yaml`, `model_backend.yaml`, and `nodekey.json` files for you in your home directory (`~/.fxn`).
 
     ```bash
     go run github.com/fxnlabs/function-node/cmd/fxn start
@@ -33,7 +33,7 @@ The Function Node is the core software for providers on the Function Network, a 
 
 2.  **Get Your Node Address:**
 
-    Once the node has started and created the `nodekey.json` file, you can get your node's address.
+    Once the node has started and created the `nodekey.json` file in `~/.fxn`, you can get your node's address.
 
     ```bash
     go run github.com/fxnlabs/function-node/cmd/fxn account get
@@ -43,7 +43,7 @@ The Function Node is the core software for providers on the Function Network, a 
 
 3.  **Customize Your Configuration:**
 
-    After the initial run, you can customize the `config.yaml` and `model_backend.yaml` files to match your specific setup.
+    After the initial run, you can customize the `config.yaml` and `model_backend.yaml` files located in `~/.fxn` to match your specific setup.
 
 ## Building
 
