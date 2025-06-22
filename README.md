@@ -23,40 +23,27 @@ The Function Node is the core software for providers on the Function Network, a 
 
 ## Quick Start
 
-1.  **Copy Templates:**
+1.  **Run the Node:**
 
-    Create your `model_backend.yaml` and `config.yaml` from the provided templates.
-
-    ```bash
-    cp model_backend.yaml.template model_backend.yaml
-    cp config.yaml.template config.yaml
-    ```
-
-2.  **Generate Node Key:**
-
-    Create a new account (keypair) for your node.
+    Start the node software. When you run the node for the first time, it will automatically generate the default `config.yaml`, `model_backend.yaml`, and `nodekey.json` files for you.
 
     ```bash
-    go run github.com/fxnlabs/function-node/cmd/fxn account new
+    go run github.com/fxnlabs/function-node/cmd/fxn start
     ```
 
-3.  *Register node into the network using the address**
+2.  **Get Your Node Address:**
 
-    Create a new account (keypair) for your node.
+    Once the node has started and created the `nodekey.json` file, you can get your node's address.
 
     ```bash
     go run github.com/fxnlabs/function-node/cmd/fxn account get
     ```
 
-    This will output your node address.
+    This will output your node address, which you can use to register your node on the network.
 
-4.  **Run the Node:**
+3.  **Customize Your Configuration:**
 
-    Start the node software.
-
-    ```bash
-    go run github.com/fxnlabs/function-node/cmd/fxn start
-    ```
+    After the initial run, you can customize the `config.yaml` and `model_backend.yaml` files to match your specific setup.
 
 ## Building
 
