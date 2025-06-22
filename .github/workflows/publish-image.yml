@@ -86,35 +86,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  build-binaries:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.23.0
-      - name: Run GoReleaser Build
-        uses: goreleaser/goreleaser-action@v4
-        with:
-          distribution: goreleaser
-          version: latest
-          args: build --clean --snapshot
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: goreleaser-dist-${{ matrix.os }}
-          path: dist
-
   release:
-    needs: build-binaries
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -124,19 +97,12 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.23.0
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-      - name: Prepare dist directory
-        run: |
-          mkdir dist
-          cp -r goreleaser-dist-ubuntu-latest/* dist/
-          cp -r goreleaser-dist-macos-latest/* dist/
       - name: Run GoReleaser Release
         uses: goreleaser/goreleaser-action@v4
         with:
           distribution: goreleaser
           version: latest
-          args: release
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
