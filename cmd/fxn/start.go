@@ -59,6 +59,12 @@ func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.Et
 	http.Handle("/metrics", promhttp.Handler())
 	rootLogger.Info("Prometheus metrics available at /metrics")
 
+	// Health check endpoint
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+
 	addr := fmt.Sprintf(":%d", cfg.Node.ListenPort)
 	rootLogger.Info("Starting server on", zap.String("address", addr))
 	if err := http.ListenAndServe(addr, nil); err != nil {
