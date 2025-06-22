@@ -38,5 +38,5 @@ brews:
       name: goreleaser
       email: bot@goreleaser.com
     homepage: "https://github.com/fxnlabs/function-node"
-    description: "Description of your application."
+    description: "Function Node is the core software for providers."
     license: "MIT" # Or your project's license
