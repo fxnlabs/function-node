@@ -48,6 +48,7 @@ homebrew_casks:
     repository:
       owner: fxnlabs
       name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: https://github.com/fxnlabs/function-node
     description: Function Node is the core software for providers.
