@@ -6,7 +6,7 @@ on:
     tags: ['*']
 
 jobs:
-  build-node:
+  build-nocuda:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -43,5 +43,44 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/amd64
           file: Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  build-cuda:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Docker Setup QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Docker Setup Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Docker Metadata action
+        id: meta
+        uses: docker/metadata-action@v4
+        env:
+          DOCKER_METADATA_PR_HEAD_SHA: "true"
+        with:
+          images: |
+            ghcr.io/fxnlabs/function-node
+          tags: |
+            type=schedule,suffix=-cuda
+            type=ref,event=tag,suffix=-cuda
+            type=ref,event=branch,suffix=-cuda
+            type=ref,event=pr,suffix=-cuda
+            type=sha,suffix=-cuda
+            type=sha,format=long,suffix=-cuda
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          file: Dockerfile.cuda
           cache-from: type=gha
           cache-to: type=gha,mode=max
