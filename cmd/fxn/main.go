@@ -5,11 +5,45 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fxnlabs/function-node/fixtures"
 	"github.com/fxnlabs/function-node/internal/config"
+	"github.com/fxnlabs/function-node/internal/keys"
 	"github.com/fxnlabs/function-node/internal/logger"
 	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 )
+
+func ensureDefaultConfigs(configHomePath string) error {
+	// Create the config directory if it doesn't exist
+	if err := os.MkdirAll(configHomePath, os.ModePerm); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	templateFiles := []struct {
+		name    string
+		content []byte
+	}{
+		{"model_backend.yaml", fixtures.ModelBackendTemplate},
+		{"config.yaml", fixtures.ConfigTemplate},
+	}
+
+	for _, file := range templateFiles {
+		path := filepath.Join(configHomePath, file.name)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			if err := os.WriteFile(path, file.content, 0644); err != nil {
+				return fmt.Errorf("failed to write default %s: %w", file.name, err)
+			}
+		}
+	}
+
+	nodeKeyPath := filepath.Join(configHomePath, "nodekey.json")
+	if _, err := os.Stat(nodeKeyPath); os.IsNotExist(err) {
+		if err := keys.GenerateKeyFile(nodeKeyPath); err != nil {
+			return fmt.Errorf("failed to generate node key: %w", err)
+		}
+	}
+	return nil
+}
 
 func main() {
 	var home string
@@ -31,6 +65,10 @@ func main() {
 			},
 		},
 		Before: func(c *cli.Context) error {
+			if err := ensureDefaultConfigs(home); err != nil {
+				return fmt.Errorf("failed to set up default configuration: %w", err)
+			}
+
 			var err error
 			cfg, err = config.LoadConfig(filepath.Join(home, "config.yaml"))
 			if err != nil {

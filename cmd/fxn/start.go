@@ -5,11 +5,8 @@ import (
 	"net/http"
 	"path/filepath"
 
-	"os"
-
 	"github.com/ethereum/go-ethereum/common"
 	goethclient "github.com/ethereum/go-ethereum/ethclient"
-	"github.com/fxnlabs/function-node/fixtures"
 	"github.com/fxnlabs/function-node/internal/auth"
 	"github.com/fxnlabs/function-node/internal/challenge"
 	"github.com/fxnlabs/function-node/internal/config"
@@ -24,40 +21,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func ensureDefaultConfigs(configHomePath string, log *zap.Logger) {
-	// Check for model_backend.yaml
-	modelBackendPath := filepath.Join(configHomePath, "model_backend.yaml")
-	if _, err := os.Stat(modelBackendPath); os.IsNotExist(err) {
-		log.Info("model_backend.yaml not found, creating default")
-		if err := os.WriteFile(modelBackendPath, fixtures.ModelBackendTemplate, 0644); err != nil {
-			log.Fatal("failed to write default model_backend.yaml", zap.Error(err))
-		}
-	}
-
-	// Check for config.yaml
-	configPath := filepath.Join(configHomePath, "config.yaml")
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		log.Info("config.yaml not found, creating default")
-		if err := os.WriteFile(configPath, fixtures.ConfigTemplate, 0644); err != nil {
-			log.Fatal("failed to write default config.yaml", zap.Error(err))
-		}
-	}
-
-	// Check for nodekey.json
-	nodeKeyPath := filepath.Join(configHomePath, "nodekey.json")
-	if _, err := os.Stat(nodeKeyPath); os.IsNotExist(err) {
-		log.Info("nodekey.json not found, generating new key")
-		if err := keys.GenerateKeyFile(nodeKeyPath); err != nil {
-			log.Fatal("failed to generate node key", zap.Error(err))
-		}
-	}
-}
-
 func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
 	rootLogger := log.Named("node")
-
-	ensureDefaultConfigs(configHomePath, rootLogger)
-
 	modelBackendConfig, err := config.LoadModelBackendConfig(filepath.Join(configHomePath, "model_backend.yaml"))
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
