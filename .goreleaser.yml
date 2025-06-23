@@ -43,28 +43,6 @@ changelog:
       - '^docs:'
       - '^test:'
 
-notarize:
-  macos:
-      enabled: true
-      ids:
-        - fxn
-      sign:
-        certificate: "{{.Env.MACOS_SIGN_P12}}"
-        password: "{{.Env.MACOS_SIGN_PASSWORD}}"
-
-        # # Allows to set the signature entitlements XML file.
-        # #
-        # # Templates: allowed.
-        # # Since: v2.6.
-        # entitlements: ./path/to/entitlements.xml
-
-      notarize:
-        issuer_id: "{{.Env.MACOS_NOTARY_ISSUER_ID}}"
-        key_id: "{{.Env.MACOS_NOTARY_KEY_ID}}"
-        key: "{{.Env.MACOS_NOTARY_KEY}}"
-        wait: true
-        timeout: 20m
-
 homebrew_casks:
   - name: fxn
     repository:
