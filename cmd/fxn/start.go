@@ -77,10 +77,27 @@ func startCommand() *cli.Command {
 	return &cli.Command{
 		Name:  "start",
 		Usage: "Start the function node",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "tui",
+				Usage: "Show current identity and log section interactively",
+			},
+		},
 		Action: func(c *cli.Context) error {
 			log := c.App.Metadata["logger"].(*zap.Logger)
 			cfg := c.App.Metadata["cfg"].(*config.Config)
 			homeDir := c.App.Metadata["homeDir"].(string)
+			enableTUI := c.Bool("tui")
+
+			if enableTUI {
+				// The TUI reads from Stdin, so it needs to be handled carefully.
+				// Running it in a goroutine allows the main app to continue.
+				// The TUI itself will handle its lifecycle.
+				go StartInteractiveTUI(homeDir, log.Named("tui"))
+				// Add a small delay or a mechanism to ensure TUI initializes before other logs, if necessary.
+				// For now, direct launch.
+				log.Info("Interactive TUI enabled. Main application logs will continue below/separately.")
+			}
 
 			// Initialize Ethereum client
 			ethClient, err := goethclient.Dial(cfg.RpcProvider)
