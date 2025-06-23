@@ -92,11 +92,6 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		if rootLogger != nil {
-			rootLogger.Fatal("failed to run app", zap.Error(err))
-		} else {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			os.Exit(1)
-		}
+		rootLogger.Fatal("failed to run app", zap.Error(err))
 	}
 }
