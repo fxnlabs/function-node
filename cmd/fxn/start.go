@@ -89,16 +89,6 @@ func startCommand() *cli.Command {
 			homeDir := c.App.Metadata["homeDir"].(string)
 			enableTUI := c.Bool("tui")
 
-			if enableTUI {
-				// The TUI reads from Stdin, so it needs to be handled carefully.
-				// Running it in a goroutine allows the main app to continue.
-				// The TUI itself will handle its lifecycle.
-				go StartInteractiveTUI(homeDir, log.Named("tui"))
-				// Add a small delay or a mechanism to ensure TUI initializes before other logs, if necessary.
-				// For now, direct launch.
-				log.Info("Interactive TUI enabled. Main application logs will continue below/separately.")
-			}
-
 			// Initialize Ethereum client
 			ethClient, err := goethclient.Dial(cfg.RpcProvider)
 			if err != nil {
@@ -113,7 +103,23 @@ func startCommand() *cli.Command {
 				log.Fatal("failed to create router", zap.Error(err))
 			}
 
-			// Initialize registries
+			// Initialize providerRegistry first so it's available for TUI
+			providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, log, router)
+			if err != nil {
+				log.Fatal("failed to initialize provider registry", zap.Error(err))
+			}
+
+			if enableTUI {
+				// The TUI reads from Stdin, so it needs to be handled carefully.
+				// Running it in a goroutine allows the main app to continue.
+				// The TUI itself will handle its lifecycle.
+				go StartInteractiveTUI(homeDir, log.Named("tui"), providerRegistry)
+				// Add a small delay or a mechanism to ensure TUI initializes before other logs, if necessary.
+				// For now, direct launch.
+				log.Info("Interactive TUI enabled. Main application logs will continue below/separately.")
+			}
+
+			// Initialize other registries
 			gatewayRegistry, err := registry.NewGatewayRegistry(ethClient, cfg, log, router)
 			if err != nil {
 				log.Fatal("failed to initialize gateway registry", zap.Error(err))
@@ -124,10 +130,7 @@ func startCommand() *cli.Command {
 				log.Fatal("failed to initialize scheduler registry", zap.Error(err))
 			}
 
-			providerRegistry, err := registry.NewProviderRegistry(ethClient, cfg, log, router)
-			if err != nil {
-				log.Fatal("failed to initialize provider registry", zap.Error(err))
-			}
+			// providerRegistry is already initialized above
 
 			return startNode(homeDir, cfg, ethClient, router, gatewayRegistry, schedulerRegistry, providerRegistry, log)
 		},

@@ -10,8 +10,10 @@ import (
 	"strings"
 
 	"github.com/common-nighthawk/go-figure"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/fxnlabs/function-node/internal/challenge/challengers"
 	"github.com/fxnlabs/function-node/internal/keys"
+	"github.com/fxnlabs/function-node/internal/registry"
 	"go.uber.org/zap"
 )
 
@@ -24,10 +26,13 @@ func printTuiInteractiveMessage(message string) {
 
 var (
 	// State for TUI
-	isLogsView        = false
-	nodeAddressString string
-	publicIPString    string
-	gpuInfoString     string
+	isLogsView             = false
+	nodeAddressString      string
+	publicIPString         string
+	gpuInfoString          string
+	providerIDString       string
+	providerMetadataString string
+	providerStatusString   string
 )
 
 // clearStdout clears the terminal screen where stdout is directed.
@@ -69,6 +74,21 @@ func renderIdentityView() {
 	} else {
 		fmt.Println("GPU Information: Fetching...")
 	}
+	if providerIDString != "" {
+		fmt.Printf("Provider ID: %s\n", providerIDString)
+	} else {
+		fmt.Println("Provider ID: Not found or fetching...")
+	}
+	if providerMetadataString != "" {
+		fmt.Printf("Provider Metadata: %s\n", providerMetadataString)
+	} else {
+		fmt.Println("Provider Metadata: Not found or fetching...")
+	}
+	if providerStatusString != "" {
+		fmt.Printf("Provider Status: %s\n", providerStatusString)
+	} else {
+		fmt.Println("Provider Status: Not found or fetching...")
+	}
 	fmt.Println("-----------------------------------------------")
 	fmt.Println("Press 'l' + Enter to toggle logs view. App logs stream separately (usually stderr).")
 }
@@ -83,7 +103,7 @@ func renderLogsHeaderView() {
 	fmt.Println("-----------------------------------------------")
 }
 
-func fetchAndCacheNodeInfo(homeDir string, baseLog *zap.Logger) {
+func fetchAndCacheNodeInfo(homeDir string, baseLog *zap.Logger, providerRegistry registry.Registry) {
 	logger := baseLog.Named("tui-fetch")
 	keyPath := filepath.Join(homeDir, "nodekey.json")
 
@@ -140,16 +160,61 @@ func fetchAndCacheNodeInfo(homeDir string, baseLog *zap.Logger) {
 		// nodeAddressString retains value from key load, if any.
 		// publicIPString and gpuInfoString will remain empty as they depend on successful challenger execution.
 	}
+
+	// Fetch provider info from registry
+	if providerRegistry != nil && nodeAddressString != "" {
+		logger.Info("Attempting to fetch provider info from registry using Get()", zap.String("nodeAddress", nodeAddressString))
+		nodeAddrLower := strings.ToLower(nodeAddressString) // Ensure consistent casing for lookup
+		p, found := providerRegistry.Get(nodeAddrLower)
+
+		if found {
+			if provider, ok := p.(registry.Provider); ok {
+				// Ensure the Owner address from the retrieved provider matches, just in case of case sensitivity in map keys
+				// (though Hex() should be consistent, this is an extra check)
+				if strings.ToLower(provider.Owner.Hex()) == nodeAddrLower {
+					providerIDString = common.Bytes2Hex(provider.Id) // Convert ID bytes to hex string
+					providerMetadataString = provider.Metadata
+					if provider.Paused {
+						providerStatusString = "Paused"
+					} else {
+						providerStatusString = "Active"
+					}
+					logger.Info("Found matching provider in registry",
+						zap.String("providerID", providerIDString),
+						zap.String("owner", provider.Owner.Hex()),
+						zap.String("metadata", providerMetadataString),
+						zap.Bool("paused", provider.Paused))
+				} else {
+					// This case should ideally not happen if keys are stored consistently.
+					logger.Warn("Provider found by Get(), but owner address mismatch after case normalization",
+						zap.String("requestedAddress", nodeAddrLower),
+						zap.String("providerOwner", strings.ToLower(provider.Owner.Hex())))
+				}
+			} else {
+				logger.Warn("Item retrieved from provider registry is not of type registry.Provider", zap.Any("item", p))
+			}
+		} else {
+			logger.Info("No provider found in registry for node address using Get()", zap.String("nodeAddress", nodeAddrLower))
+			// providerIDString, providerMetadataString, providerStatusString will remain empty
+		}
+	} else {
+		if providerRegistry == nil {
+			logger.Warn("Provider registry is nil, cannot fetch provider info.")
+		}
+		if nodeAddressString == "" {
+			logger.Warn("Node address is empty, cannot fetch provider info.")
+		}
+	}
 }
 
 // StartInteractiveTUI is intended to be run as a goroutine.
 // It handles the display and input for the TUI.
-func StartInteractiveTUI(homeDir string, baseLog *zap.Logger) {
+func StartInteractiveTUI(homeDir string, baseLog *zap.Logger, providerRegistry registry.Registry) {
 	renderIdentityView() // Render initial view immediately
 
 	// Fetch node info in the background
 	go func() {
-		fetchAndCacheNodeInfo(homeDir, baseLog)
+		fetchAndCacheNodeInfo(homeDir, baseLog, providerRegistry)
 		// After fetching, re-render if still in identity view
 		if !isLogsView {
 			// Need to ensure prompt is not overwritten if user is typing

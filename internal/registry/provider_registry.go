@@ -16,7 +16,6 @@ import (
 	"go.uber.org/zap"
 )
 
-
 // Provider represents the structure of a provider in the registry.
 type Provider struct {
 	Owner        common.Address `json:"owner"`
@@ -123,10 +122,11 @@ func fetchProviderRegistry(
 	// Convert to the required map format
 	registryData := make(map[string]interface{})
 	for _, provider := range providers {
-		registryData[string(provider.Id)] = provider
-		logger.Debug("Fetched provider", zap.String("id", string(provider.Id)), zap.String("owner", provider.Owner.Hex()))
+		// Key by the provider's owner address (hex string) to allow Get(nodeAddress)
+		registryData[provider.Owner.Hex()] = provider
+		logger.Debug("Fetched provider", zap.String("owner", provider.Owner.Hex()), zap.String("id", common.Bytes2Hex(provider.Id)), zap.String("metadata", provider.Metadata))
 	}
 
-	logger.Info("Successfully fetched and processed provider registry", zap.Int("provider_count", len(providers)))
+	logger.Info("Successfully fetched and processed provider registry", zap.Int("provider_count", len(providers)), zap.String("keyed_by", "owner_address_hex"))
 	return registryData, nil
 }
