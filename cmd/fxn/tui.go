@@ -48,6 +48,7 @@ func clearStdout() {
 }
 
 func renderIdentityView() {
+	// Then proceed with clear and full render. This might cause a flicker but shows text fast.
 	clearStdout()
 	myFigure := figure.NewFigure("FxN Node", "", true)
 	myFigure.Print()
@@ -55,18 +56,18 @@ func renderIdentityView() {
 	if nodeAddressString != "" {
 		fmt.Printf("Node Address: %s\n", nodeAddressString)
 	} else {
-		fmt.Println("Node Address: Not available")
+		fmt.Println("Node Address: Fetching...")
 	}
 	if publicIPString != "" {
 		fmt.Printf("Public IP: %s\n", publicIPString)
 	} else {
-		fmt.Println("Public IP: Not available")
+		fmt.Println("Public IP: Fetching...")
 	}
 	if gpuInfoString != "" {
 		fmt.Println("GPU Information:")
 		fmt.Print(gpuInfoString) // gpuInfoString includes necessary formatting
 	} else {
-		fmt.Println("GPU Information: Not available or no GPUs detected.")
+		fmt.Println("GPU Information: Fetching...")
 	}
 	fmt.Println("-----------------------------------------------")
 	fmt.Println("Press 'l' + Enter to toggle logs view. App logs stream separately (usually stderr).")
@@ -144,8 +145,21 @@ func fetchAndCacheNodeInfo(homeDir string, baseLog *zap.Logger) {
 // StartInteractiveTUI is intended to be run as a goroutine.
 // It handles the display and input for the TUI.
 func StartInteractiveTUI(homeDir string, baseLog *zap.Logger) {
-	fetchAndCacheNodeInfo(homeDir, baseLog)
-	renderIdentityView()
+	renderIdentityView() // Render initial view immediately
+
+	// Fetch node info in the background
+	go func() {
+		fetchAndCacheNodeInfo(homeDir, baseLog)
+		// After fetching, re-render if still in identity view
+		if !isLogsView {
+			// Need to ensure prompt is not overwritten if user is typing
+			// A simple way is to clear and re-render.
+			// For a more sophisticated TUI, a channel/event system would be better.
+			fmt.Println() // Add a newline to avoid clobbering potential user input line
+			renderIdentityView()
+			fmt.Print("> ") // Re-print prompt
+		}
+	}()
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
