@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/common-nighthawk/go-figure"
 	"github.com/ethereum/go-ethereum/common"
@@ -210,43 +211,60 @@ func fetchAndCacheNodeInfo(homeDir string, baseLog *zap.Logger, providerRegistry
 // StartInteractiveTUI is intended to be run as a goroutine.
 // It handles the display and input for the TUI.
 func StartInteractiveTUI(homeDir string, baseLog *zap.Logger, providerRegistry registry.Registry) {
-	renderIdentityView() // Render initial view immediately
+	// Initial render
+	fetchAndCacheNodeInfo(homeDir, baseLog, providerRegistry)
+	renderIdentityView()
 
-	// Fetch node info in the background
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	inputChan := make(chan string)
+
+	// Goroutine to read user input
 	go func() {
-		fetchAndCacheNodeInfo(homeDir, baseLog, providerRegistry)
-		// After fetching, re-render if still in identity view
-		if !isLogsView {
-			// Need to ensure prompt is not overwritten if user is typing
-			// A simple way is to clear and re-render.
-			// For a more sophisticated TUI, a channel/event system would be better.
-			fmt.Println() // Add a newline to avoid clobbering potential user input line
-			renderIdentityView()
-			fmt.Print("> ") // Re-print prompt
+		reader := bufio.NewReader(os.Stdin)
+		for {
+			fmt.Print("> ") // Prompt for TUI command
+			input, err := reader.ReadString('\n')
+			if err != nil {
+				baseLog.Error("TUI input error, closing input channel.", zap.Error(err))
+				close(inputChan)
+				return
+			}
+			inputChan <- input
 		}
 	}()
 
-	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Print("> ") // Prompt for TUI command
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			baseLog.Error("TUI input error, exiting TUI loop.", zap.Error(err))
-			return // Exit TUI goroutine
-		}
-
-		input = strings.TrimSpace(strings.ToLower(input))
-		if input == "l" {
-			isLogsView = !isLogsView
-			if isLogsView {
-				renderLogsHeaderView()
-			} else {
+		select {
+		case <-ticker.C:
+			if !isLogsView {
+				// Re-fetch and re-render the identity view
+				fetchAndCacheNodeInfo(homeDir, baseLog, providerRegistry)
 				renderIdentityView()
+				fmt.Print("> ") // Re-print prompt after render
 			}
-		} else if input != "" {
-			// Handle other commands or provide help
-			printTuiInteractiveMessage("Unknown command. Press 'l' + Enter to toggle views.")
+		case input, ok := <-inputChan:
+			if !ok {
+				baseLog.Info("TUI input channel closed, exiting TUI loop.")
+				return // Exit TUI goroutine
+			}
+
+			processedInput := strings.TrimSpace(strings.ToLower(input))
+			if processedInput == "l" {
+				isLogsView = !isLogsView
+				if isLogsView {
+					renderLogsHeaderView()
+				} else {
+					// When switching back to identity view, fetch and render immediately
+					fetchAndCacheNodeInfo(homeDir, baseLog, providerRegistry)
+					renderIdentityView()
+				}
+			} else if processedInput != "" {
+				// Handle other commands or provide help
+				printTuiInteractiveMessage("Unknown command. Press 'l' + Enter to toggle views.")
+			}
+			// If input is empty (just Enter), the loop continues and prompt is re-printed by the input goroutine.
 		}
-		// If input is empty (just Enter), re-prompt without changing view.
 	}
 }
