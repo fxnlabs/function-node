@@ -18,7 +18,8 @@ func GetDefaultConfigHome() string {
 
 type Config struct {
 	Node struct {
-		ListenPort int `yaml:"listenPort"`
+		ListenPort    int    `yaml:"listenPort"`
+		ListenAddress string `yaml:"listenAddress"`
 	} `yaml:"node"`
 	Logger struct {
 		Verbosity string `yaml:"verbosity"`

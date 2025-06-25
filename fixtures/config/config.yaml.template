@@ -1,5 +1,6 @@
 node:
   listenPort: 8080
+  listenAddress: "127.0.0.1"
 logger:
   verbosity: "info"
 registry:

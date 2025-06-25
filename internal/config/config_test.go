@@ -17,6 +17,7 @@ func TestLoadConfig(t *testing.T) {
 		require.NotNil(t, config)
 
 		assert.Equal(t, 8080, config.Node.ListenPort)
+		assert.Equal(t, "127.0.0.1", config.Node.ListenAddress)
 		assert.Equal(t, "info", config.Logger.Verbosity)
 		assert.Equal(t, "0x123", config.Registry.RouterSmartContractAddress)
 		assert.Equal(t, 10*time.Second, config.Registry.Gateway.PollInterval)
