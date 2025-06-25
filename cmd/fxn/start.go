@@ -7,7 +7,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	goethclient "github.com/ethereum/go-ethereum/ethclient"
-	"github.com/fxnlabs/function-node/internal/auth"
 	"github.com/fxnlabs/function-node/internal/challenge"
 	"github.com/fxnlabs/function-node/internal/config"
 	"github.com/fxnlabs/function-node/internal/contracts"
@@ -33,9 +32,6 @@ func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.Et
 		rootLogger.Fatal("failed to load private key", zap.Error(err))
 	}
 
-	// Use for verifying signatures and preventing replay attacks.
-	nonceCache := auth.NewNonceCache(cfg.NonceCache.TTL, cfg.NonceCache.CleanupInterval)
-
 	// Make providerRegistry available if needed by other parts, e.g., auth middleware
 	// For now, it's initialized but not explicitly used further in this snippet.
 	// If IsProviderRegistered is part of auth, it might use this providerRegistry.
@@ -45,15 +41,15 @@ func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.Et
 	// Assuming AuthMiddleware might need providerRegistry if it performs provider registration checks.
 	// If not, schedulerRegistry might be the correct one for challenges.
 	// Based on existing code, schedulerRegistry is used for /challenge
-	http.Handle("/challenge", metrics.Middleware(auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry), "/challenge"))
+	http.Handle("/challenge", metrics.Middleware(challengeHandler, "/challenge"))
 
 	oaiProxyHandler := openai.NewOAIProxyHandler(cfg, modelBackendConfig, rootLogger)
-	http.Handle("/v1/chat/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/chat/completions"))
-	http.Handle("/v1/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/completions"))
-	http.Handle("/v1/embeddings", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/embeddings"))
+	http.Handle("/v1/chat/completions", metrics.Middleware(oaiProxyHandler, "/v1/chat/completions"))
+	http.Handle("/v1/completions", metrics.Middleware(oaiProxyHandler, "/v1/completions"))
+	http.Handle("/v1/embeddings", metrics.Middleware(oaiProxyHandler, "/v1/embeddings"))
 
 	modelsHandler := openai.NewModelsHandler(modelBackendConfig, rootLogger)
-	http.Handle("/v1/models", metrics.Middleware(auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/models"))
+	http.Handle("/v1/models", metrics.Middleware(modelsHandler, "/v1/models"))
 
 	// Expose Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
