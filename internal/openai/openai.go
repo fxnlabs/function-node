@@ -17,6 +17,7 @@ type Model struct {
 	Object  string `json:"object"`
 	Created int64  `json:"created"`
 	OwnedBy string `json:"owned_by"`
+	FxnID   string `json:"fxn_id"`
 }
 
 type ModelList struct {
@@ -47,12 +48,13 @@ func NewOAIProxyHandler(cfg *config.Config, modelBackendConfig *config.ModelBack
 func NewModelsHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		models := make([]Model, 0, len(backendConfig.Models))
-		for modelID := range backendConfig.Models {
+		for modelID, modelInfo := range backendConfig.Models {
 			models = append(models, Model{
 				ID:      modelID,
 				Object:  "model",
 				Created: time.Now().Unix(),
 				OwnedBy: "fxn",
+				FxnID:   modelInfo.FxnID,
 			})
 		}
 

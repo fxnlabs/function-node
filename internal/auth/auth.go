@@ -60,7 +60,7 @@ func (c *NonceCache) Use(nonce string) {
 	c.nonces[nonce] = time.Now()
 }
 
-func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, reg registry.Registry) http.Handler {
+func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, regs ...registry.Registry) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		address := r.Header.Get("X-Address")
 		if address == "" {
@@ -69,7 +69,15 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 			return
 		}
 
-		if _, ok := reg.Get(address); !ok {
+		var authenticated bool
+		for _, reg := range regs {
+			if _, ok := reg.Get(address); ok {
+				authenticated = true
+				break
+			}
+		}
+
+		if !authenticated {
 			log.Warn("node not registered", zap.String("address", address))
 			http.Error(w, "node not registered", http.StatusUnauthorized)
 			return

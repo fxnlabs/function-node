@@ -18,8 +18,8 @@ func TestNewModelsHandler(t *testing.T) {
 	log := zap.NewNop()
 	backendConfig := &config.ModelBackendConfig{
 		Models: map[string]config.ModelBackend{
-			"model-1": {},
-			"model-2": {},
+			"model-1": {FxnID: "fxn-id-1"},
+			"model-2": {FxnID: "fxn-id-2"},
 		},
 	}
 
@@ -38,12 +38,15 @@ func TestNewModelsHandler(t *testing.T) {
 	assert.Equal(t, "list", modelList.Object)
 	assert.Len(t, modelList.Data, 2)
 
-	modelIDs := make([]string, 0, len(modelList.Data))
+	models := make(map[string]Model)
 	for _, m := range modelList.Data {
-		modelIDs = append(modelIDs, m.ID)
+		models[m.ID] = m
 	}
-	assert.Contains(t, modelIDs, "model-1")
-	assert.Contains(t, modelIDs, "model-2")
+
+	assert.Contains(t, models, "model-1")
+	assert.Equal(t, "fxn-id-1", models["model-1"].FxnID)
+	assert.Contains(t, models, "model-2")
+	assert.Equal(t, "fxn-id-2", models["model-2"].FxnID)
 }
 
 func TestNewModelsHandler_NoModels(t *testing.T) {

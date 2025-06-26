@@ -48,12 +48,12 @@ func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.Et
 	http.Handle("/challenge", metrics.Middleware(auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry), "/challenge"))
 
 	oaiProxyHandler := openai.NewOAIProxyHandler(cfg, modelBackendConfig, rootLogger)
-	http.Handle("/v1/chat/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/chat/completions"))
-	http.Handle("/v1/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/completions"))
-	http.Handle("/v1/embeddings", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/embeddings"))
+	http.Handle("/v1/chat/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/chat/completions"))
+	http.Handle("/v1/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/completions"))
+	http.Handle("/v1/embeddings", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/embeddings"))
 
 	modelsHandler := openai.NewModelsHandler(modelBackendConfig, rootLogger)
-	http.Handle("/v1/models", metrics.Middleware(auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry), "/v1/models"))
+	http.Handle("/v1/models", metrics.Middleware(auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/models"))
 
 	// Expose Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())

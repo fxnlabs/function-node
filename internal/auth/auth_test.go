@@ -103,6 +103,74 @@ func TestAuthMiddleware(t *testing.T) {
 
 	authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg)
 
+	t.Run("valid request with multiple registries", func(t *testing.T) {
+		mockReg2 := new(mocks.MockRegistry)
+		authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg, mockReg2)
+		body := []byte(`{"hello":"world"}`)
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		nonce := fmt.Sprintf("test-nonce-1-%d", time.Now().UnixNano())
+
+		bodyHash := sha256.Sum256(body)
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestamp, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+
+		signature, err := crypto.Sign(messageHash, privateKey)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+		req.Header.Set("X-Address", address)
+		req.Header.Set("X-Signature", hex.EncodeToString(signature))
+		req.Header.Set("X-Timestamp", timestamp)
+		req.Header.Set("X-Nonce", nonce)
+
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		bodyBytes, err := io.ReadAll(rr.Body)
+		require.NoError(t, err)
+		assert.Equal(t, "OK", string(bodyBytes))
+	})
+
+	t.Run("valid request in second registry", func(t *testing.T) {
+		privateKey2, err := crypto.GenerateKey()
+		require.NoError(t, err)
+		publicKey2 := privateKey2.Public()
+		publicKeyECDSA2, ok := publicKey2.(*ecdsa.PublicKey)
+		require.True(t, ok)
+		address2 := crypto.PubkeyToAddress(*publicKeyECDSA2).Hex()
+
+		mockReg.On("Get", address2).Return(nil, false).Once()
+		mockReg2 := new(mocks.MockRegistry)
+		mockReg2.On("Get", address2).Return(struct{}{}, true).Once()
+		authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg, mockReg2)
+
+		body := []byte(`{"hello":"world"}`)
+		timestamp := fmt.Sprintf("%d", time.Now().Unix())
+		nonce := fmt.Sprintf("test-nonce-second-reg-%d", time.Now().UnixNano())
+
+		bodyHash := sha256.Sum256(body)
+		messageStr := fmt.Sprintf("%x.%s.%s", bodyHash, timestamp, nonce)
+		messageHash := crypto.Keccak256([]byte(fmt.Sprintf("\x19Ethereum Signed Message:\n%d%s", len(messageStr), messageStr)))
+
+		signature, err := crypto.Sign(messageHash, privateKey2)
+		require.NoError(t, err)
+
+		req := httptest.NewRequest("POST", "/", bytes.NewReader(body))
+		req.Header.Set("X-Address", address2)
+		req.Header.Set("X-Signature", hex.EncodeToString(signature))
+		req.Header.Set("X-Timestamp", timestamp)
+		req.Header.Set("X-Nonce", nonce)
+
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusOK, rr.Code)
+		bodyBytes, err := io.ReadAll(rr.Body)
+		require.NoError(t, err)
+		assert.Equal(t, "OK", string(bodyBytes))
+	})
+
 	t.Run("valid request", func(t *testing.T) {
 		body := []byte(`{"hello":"world"}`)
 		timestamp := fmt.Sprintf("%d", time.Now().Unix())
@@ -140,6 +208,20 @@ func TestAuthMiddleware(t *testing.T) {
 	t.Run("node not registered", func(t *testing.T) {
 		req := httptest.NewRequest("POST", "/", strings.NewReader(""))
 		req.Header.Set("X-Address", "0x0000000000000000000000000000000000000000")
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusUnauthorized, rr.Code)
+	})
+
+	t.Run("node not registered in any registry", func(t *testing.T) {
+		unregisteredAddr := "0x1111111111111111111111111111111111111111"
+		mockReg.On("Get", unregisteredAddr).Return(nil, false).Once()
+		mockReg2 := new(mocks.MockRegistry)
+		mockReg2.On("Get", unregisteredAddr).Return(nil, false).Once()
+		authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg, mockReg2)
+
+		req := httptest.NewRequest("POST", "/", strings.NewReader(""))
+		req.Header.Set("X-Address", unregisteredAddr)
 		rr := httptest.NewRecorder()
 		authHandler.ServeHTTP(rr, req)
 		assert.Equal(t, http.StatusUnauthorized, rr.Code)
