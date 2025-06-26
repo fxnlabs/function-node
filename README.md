@@ -42,7 +42,7 @@ You can install the `fxn` command-line tool using Homebrew.
 3.  **Upgrade `fxn`:**
 
     ```bash
-    brew upgrade fxn
+    brew update && brew upgrade fxn
     ```
 
 ## Quick Start
