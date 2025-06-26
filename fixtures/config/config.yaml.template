@@ -4,7 +4,7 @@ node:
 logger:
   verbosity: "info"
 registry:
-  routerSmartContractAddress: "0x63bb292Cf4C94c4FE34756D650b66cdb34E376bB"
+  routerSmartContractAddress: "0x541a755392d3012Ec2C47AE7331e698fcFF1Df50"
   gateway:
     pollInterval: "1m"
   scheduler:
@@ -12,7 +12,7 @@ registry:
   provider:
     pollInterval: "1m"
 rpcProvider: "https://devnet-rpc.function.network"
-schedulerAddress: "0x9EC5501b7db525648C46098CCe1Df11EbBA9c16a"
+schedulerAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 nonceCache:
   ttl: "5m"
   cleanupInterval: "10m"
