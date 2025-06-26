@@ -18,8 +18,9 @@ type AuthConfig struct {
 }
 
 type ModelBackend struct {
-	URL  string      `yaml:"url"`
-	Auth *AuthConfig `yaml:"auth,omitempty"`
+	URL   string      `yaml:"url"`
+	FxnID string      `yaml:"fxnId,omitempty"`
+	Auth  *AuthConfig `yaml:"auth,omitempty"`
 }
 
 type ModelBackendConfig struct {

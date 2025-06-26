@@ -4,6 +4,7 @@
 models:
   "meta/llama-4-scout-17b-16e-instruct":
     url: "https://api.function.network"
+    fxnId: "meta/llama-4-scout-17b-16e-instruct"
     auth:
       bearer_token: "api_key"
   # "gpt-4":

@@ -22,12 +22,14 @@ func TestLoadModelBackendConfig(t *testing.T) {
 		defaultModel, ok := config.Models["default"]
 		require.True(t, ok)
 		assert.Equal(t, "http://default-model-backend.com", defaultModel.URL)
+		assert.Equal(t, "default", defaultModel.FxnID)
 		require.NotNil(t, defaultModel.Auth)
 		assert.Equal(t, "default-api-key", defaultModel.Auth.APIKey)
 
 		llamaModel, ok := config.Models["meta/llama-4-scout-17b-16e-instruct"]
 		require.True(t, ok)
 		assert.Equal(t, "http://llama-backend.com", llamaModel.URL)
+		assert.Equal(t, "meta/llama-4-scout-17b-16e-instruct", llamaModel.FxnID)
 		require.NotNil(t, llamaModel.Auth)
 		assert.Equal(t, "llama-bearer-token", llamaModel.Auth.BearerToken)
 	})
