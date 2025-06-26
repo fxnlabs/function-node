@@ -55,8 +55,7 @@ func clearStdout() {
 
 func renderIdentityView() {
 	// Then proceed with clear and full render. This might cause a flicker but shows text fast.
-	clearStdout()
-	myFigure := figure.NewFigure("FxN Node", "", true)
+	myFigure := figure.NewColorFigure("FxN Node", "", "blue", true)
 	myFigure.Print()
 	fmt.Println("")
 	if nodeAddressString != "" {
@@ -96,7 +95,7 @@ func renderIdentityView() {
 
 func renderLogsHeaderView() {
 	clearStdout()
-	myFigure := figure.NewFigure("FxN Logs", "", true)
+	myFigure := figure.NewColorFigure("FxN Logs", "", "blue", true)
 	myFigure.Print()
 	fmt.Println("")
 	fmt.Println("Application logs are streaming (usually to stderr).")
