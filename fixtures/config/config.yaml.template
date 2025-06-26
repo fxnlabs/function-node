@@ -1,0 +1,21 @@
+node:
+  listenPort: 8080
+  listenAddress: "127.0.0.1"
+logger:
+  verbosity: "info"
+registry:
+  routerSmartContractAddress: "0x63bb292Cf4C94c4FE34756D650b66cdb34E376bB"
+  gateway:
+    pollInterval: "1m"
+  scheduler:
+    pollInterval: "1m"
+  provider:
+    pollInterval: "1m"
+rpcProvider: "https://devnet-rpc.function.network"
+schedulerAddress: "0x9EC5501b7db525648C46098CCe1Df11EbBA9c16a"
+nonceCache:
+  ttl: "5m"
+  cleanupInterval: "10m"
+proxy:
+  maxIdleConns: 100
+  idleConnTimeout: "90s"

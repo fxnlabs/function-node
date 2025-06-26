@@ -1,0 +1,27 @@
+# See https://vektra.github.io/mockery/v2.43/features/configuration/
+# for all configuration options.
+packages:
+  github.com/fxnlabs/function-node/pkg/ethclient:
+    config:
+      dir: ./mocks/ethclient
+      outpkg: mocks
+    interfaces:
+      EthClient:
+  github.com/fxnlabs/function-node/internal/registry:
+    config:
+      dir: ./mocks/registry
+      outpkg: mocks
+    interfaces:
+      Registry:
+  github.com/fxnlabs/function-node/internal/challenge/challengers:
+    config:
+      dir: ./mocks/challengers
+      outpkg: mocks
+    interfaces:
+      Executor:
+  github.com/fxnlabs/function-node/internal/contracts:
+    config:
+      dir: ./mocks/contracts
+      outpkg: mocks
+    interfaces:
+      Router:

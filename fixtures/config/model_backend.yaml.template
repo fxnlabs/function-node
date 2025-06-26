@@ -1,0 +1,16 @@
+# This is a template for the backend.yaml file.
+# It allows node operators to configure specific models and point them to different URLs (backends).
+
+models:
+  "meta/llama-4-scout-17b-16e-instruct":
+    url: "https://api.function.network"
+    auth:
+      bearer_token: "api_key"
+  # "gpt-4":
+  #   url: "http://another-backend:8082"
+  #   auth:
+  #     api_key: "your-api-key"
+  # "claude-2":
+  #   url: "http://secure-backend:8083"
+  #   auth:
+  #     bearer_token: "your-bearer-token"

@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  function-node:
+    build: .
+    command: ["./fxn", "start"]
+    environment:
+      - home=/app/.fxn
+    volumes:
+      - ~/.fxn/config.yaml:/app/.fxn/config.yaml
+      - ~/.fxn/nodekey.json:/app/.fxn/nodekey.json
+      - ~/.fxn/model_backend.yaml:/app/.fxn/model_backend.yaml
