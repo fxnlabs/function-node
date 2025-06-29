@@ -161,6 +161,7 @@ _server_port = _cfg.get("node", {}).get("listenPort", 8080)
 # Run the development server
 local_resource(
     "node:start",
+    auto_init = False,  # Only run when triggered
     labels = _labels,
     links = [link(
         "http://localhost:{_server_port}".format(
