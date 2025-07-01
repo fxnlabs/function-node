@@ -11,8 +11,8 @@ registry:
     pollInterval: "1m"
   provider:
     pollInterval: "1m"
-rpcProvider: "https://devnet-rpc.function.network"
-schedulerAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+rpcProvider: "https://base-sepolia-public.nodies.app"
+schedulerAddress: "0x0a7A1fF52515C24FAa17c13B916679926272ffc4"
 nonceCache:
   ttl: "5m"
   cleanupInterval: "10m"
