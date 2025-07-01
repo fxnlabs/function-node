@@ -4,15 +4,15 @@ node:
 logger:
   verbosity: "info"
 registry:
-  routerSmartContractAddress: "0x541a755392d3012Ec2C47AE7331e698fcFF1Df50"
+  routerSmartContractAddress: "0x7C8e239F9A26D7fd081Db72A2A23F4E9CA35E16b"
   gateway:
     pollInterval: "1m"
   scheduler:
     pollInterval: "1m"
   provider:
     pollInterval: "1m"
-rpcProvider: "https://devnet-rpc.function.network"
-schedulerAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+rpcProvider: "https://base-sepolia-public.nodies.app"
+schedulerAddress: "0x0a7A1fF52515C24FAa17c13B916679926272ffc4"
 nonceCache:
   ttl: "5m"
   cleanupInterval: "10m"
