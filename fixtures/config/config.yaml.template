@@ -4,7 +4,7 @@ node:
 logger:
   verbosity: "info"
 registry:
-  routerSmartContractAddress: "TODO"
+  routerSmartContractAddress: "0x541a755392d3012Ec2C47AE7331e698fcFF1Df50"
   gateway:
     pollInterval: "1m"
   scheduler:
