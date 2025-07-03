@@ -8,9 +8,11 @@ models:
       bearer_token: "api_key"
   # "gpt-4":
   #   url: "http://another-backend:8082"
+  #   fxnId: "3"
   #   auth:
   #     api_key: "your-api-key"
   # "claude-2":
   #   url: "http://secure-backend:8083"
+  #   fxnId: "4"
   #   auth:
   #     bearer_token: "your-bearer-token"
