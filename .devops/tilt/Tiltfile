@@ -172,6 +172,7 @@ local_resource(
     resource_deps = ["node:build"],
     serve_cmd = "./fxn --home . start",
     serve_dir = _main_dir,
+    trigger_mode = TRIGGER_MODE_MANUAL,
     deps = [
         os.path.join(_main_dir, "fxn"),
         os.path.join(_main_dir, _config_file),
