@@ -6,7 +6,7 @@ v1alpha1.extension_repo(
     url = "https://github.com/fxnlabs/tilt-extensions",
 )
 
-load("utils.Tiltfile", "go_files", "detect_gpu_backend", "validate_config_files", "format_setup_instructions")
+load("utils.Tiltfile", "detect_gpu_backend", "format_setup_instructions", "go_files", "validate_config_files")
 
 _main_dir = os.path.join(
     os.getcwd(),
@@ -21,17 +21,21 @@ _labels = ["node"]
 
 # Get configuration from environment variables (set by parent Tiltfile)
 _config_file = os.environ.get("FXN_NODE_CONFIG_FILE", "config.yaml")
+
 _model_backend_file = os.environ.get("FXN_NODE_MODEL_BACKEND_FILE", "model_backend.yaml")
+
 _requested_gpu_backend = os.environ.get("FXN_NODE_GPU_BACKEND", "auto")
 
 # Validate configuration files
 _missing_files = validate_config_files(_main_dir, _config_file, _model_backend_file)
+
 if _missing_files:
     _instructions = format_setup_instructions(_missing_files, _main_dir)
     fail(_instructions)
 
 # Detect GPU backend
 _gpu_backend = detect_gpu_backend(_requested_gpu_backend)
+
 print("🚀 Function Node GPU backend: %s" % _gpu_backend)
 
 # Install dependencies
@@ -83,7 +87,7 @@ if _gpu_backend == "cuda":
             quiet = True,
         )).strip().splitlines() or [],
     )
-    
+
     _build_deps = ["node:deps", "node:cuda-compile"]
     _build_cmd = "make cuda"
 elif _gpu_backend == "metal":
@@ -98,7 +102,7 @@ elif _gpu_backend == "metal":
             quiet = True,
         )).strip().splitlines() or [],
     )
-    
+
     _build_deps = ["node:deps", "node:metal-compile"]
     _build_cmd = "make metal"
 else:
@@ -151,15 +155,20 @@ local_resource(
 
 # Read configuration for port
 _cfg = read_yaml(os.path.join(_main_dir, _config_file))
+
 _server_port = _cfg.get("node", {}).get("listenPort", 8080)
 
 # Run the development server
 local_resource(
     "node:start",
+    auto_init = False,
     labels = _labels,
-    links = [link("http://localhost:{_server_port}".format(
-        _server_port = _server_port,
-    ), "Function Node API")],
+    links = [link(
+        "http://localhost:{_server_port}".format(
+            _server_port = _server_port,
+        ),
+        "Function Node API",
+    )],
     readiness_probe = probe(
         http_get = http_get_action(
             path = "/health",
@@ -183,3 +192,4 @@ local_resource(
 # Clean up resources when Tilt is shut down
 if config.tilt_subcommand == "down":
     local("make clean", dir = _main_dir, echo_off = True, quiet = True)
+
