@@ -1,11 +1,3 @@
-models:
-  default:
-    url: "http://default-model-backend.com"
-    fxnId: "default"
-    auth:
-      api_key: "default-api-key"
-  meta/llama-4-scout-17b-16e-instruct:
-    url: "http://llama-backend.com"
-    fxnId: "meta/llama-4-scout-17b-16e-instruct"
-    auth:
-      bearer_token: "llama-bearer-token"
+backend_provider: "fxn"
+fxn_id: "default"
+api_key: "default-api-key"
