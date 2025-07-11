@@ -1,18 +1,7 @@
 # This is a template for the backend.yaml file.
-# It allows node operators to configure specific models and point them to different URLs (backends).
-models:
-  "Qwen3-32B":
-    url: "http://your-backend:8082"
-    fxnId: "2"
-    auth:
-      bearer_token: "api_key"
-  # "gpt-4":
-  #   url: "http://another-backend:8082"
-  #   fxnId: "3"
-  #   auth:
-  #     api_key: "your-api-key"
-  # "claude-2":
-  #   url: "http://secure-backend:8083"
-  #   fxnId: "4"
-  #   auth:
-  #     bearer_token: "your-bearer-token"
+# It allows node operators to configure a specific model and point it to a different URL (backend).
+backend_provider: "custom" # "fxn", "custom", "vllm" or "ollama"
+url: "http://your-backend:8082" # required for "custom"
+fxn_id: "2" # required for "fxn"
+api_key: "your-api-key" # optional
+bearer_token: "your-bearer-token" # optional

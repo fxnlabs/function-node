@@ -16,11 +16,8 @@ import (
 
 func TestNewModelsHandler(t *testing.T) {
 	log := zap.NewNop()
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{
-			"model-1": {FxnID: "fxn-id-1"},
-			"model-2": {FxnID: "fxn-id-2"},
-		},
+	backendConfig := &config.ModelBackend{
+		FxnID: "fxn-id-1",
 	}
 
 	handler := NewModelsHandler(backendConfig, log)
@@ -36,39 +33,9 @@ func TestNewModelsHandler(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "list", modelList.Object)
-	assert.Len(t, modelList.Data, 2)
-
-	models := make(map[string]Model)
-	for _, m := range modelList.Data {
-		models[m.ID] = m
-	}
-
-	assert.Contains(t, models, "model-1")
-	assert.Equal(t, "fxn-id-1", models["model-1"].FxnID)
-	assert.Contains(t, models, "model-2")
-	assert.Equal(t, "fxn-id-2", models["model-2"].FxnID)
-}
-
-func TestNewModelsHandler_NoModels(t *testing.T) {
-	log := zap.NewNop()
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{},
-	}
-
-	handler := NewModelsHandler(backendConfig, log)
-
-	req := httptest.NewRequest("GET", "/v1/models", nil)
-	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, http.StatusOK, rr.Code)
-
-	var modelList ModelList
-	err := json.NewDecoder(rr.Body).Decode(&modelList)
-	require.NoError(t, err)
-
-	assert.Equal(t, "list", modelList.Object)
-	assert.Len(t, modelList.Data, 0)
+	assert.Len(t, modelList.Data, 1)
+	assert.Equal(t, "fxn-id-1", modelList.Data[0].ID)
+	assert.Equal(t, "fxn-id-1", modelList.Data[0].FxnID)
 }
 
 func TestNewOAIProxyHandler(t *testing.T) {
@@ -89,15 +56,9 @@ func TestNewOAIProxyHandler(t *testing.T) {
 	}))
 	defer backendServer.Close()
 
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{
-			"model-1": {
-				URL: backendServer.URL,
-				Auth: &config.AuthConfig{
-					BearerToken: "test-token",
-				},
-			},
-		},
+	backendConfig := &config.ModelBackend{
+		URL:         backendServer.URL,
+		BearerToken: "test-token",
 	}
 
 	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
@@ -113,24 +74,6 @@ func TestNewOAIProxyHandler(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "proxied response", string(respBody))
 	})
-
-	t.Run("model not found", func(t *testing.T) {
-		reqBody := `{"model": "unknown-model"}`
-		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
-		rr := httptest.NewRecorder()
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusBadRequest, rr.Code)
-	})
-
-	t.Run("invalid json body", func(t *testing.T) {
-		reqBody := `{"model": "model-1"`
-		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
-		rr := httptest.NewRecorder()
-		handler.ServeHTTP(rr, req)
-
-		assert.Equal(t, http.StatusBadRequest, rr.Code)
-	})
 }
 
 func TestProxyRequest_APIKeyAuth(t *testing.T) {
@@ -143,15 +86,9 @@ func TestProxyRequest_APIKeyAuth(t *testing.T) {
 	}))
 	defer backendServer.Close()
 
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{
-			"model-1": {
-				URL: backendServer.URL,
-				Auth: &config.AuthConfig{
-					APIKey: "test-api-key",
-				},
-			},
-		},
+	backendConfig := &config.ModelBackend{
+		URL:    backendServer.URL,
+		APIKey: "test-api-key",
 	}
 
 	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
@@ -167,12 +104,8 @@ func TestProxyRequest_Errors(t *testing.T) {
 	log := zap.NewNop()
 
 	t.Run("invalid backend url", func(t *testing.T) {
-		backendConfig := &config.ModelBackendConfig{
-			Models: map[string]config.ModelBackend{
-				"model-1": {
-					URL: "invalid-url::",
-				},
-			},
+		backendConfig := &config.ModelBackend{
+			URL: "invalid-url::",
 		}
 		handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 		reqBody := `{"model": "model-1"}`
@@ -188,12 +121,8 @@ func TestProxyRequest_Errors(t *testing.T) {
 		}))
 		defer backendServer.Close()
 
-		backendConfig := &config.ModelBackendConfig{
-			Models: map[string]config.ModelBackend{
-				"model-1": {
-					URL: backendServer.URL,
-				},
-			},
+		backendConfig := &config.ModelBackend{
+			URL: backendServer.URL,
 		}
 		handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 		reqBody := `{"model": "model-1"}`
@@ -206,12 +135,8 @@ func TestProxyRequest_Errors(t *testing.T) {
 
 func TestNewOAIProxyHandler_EmptyBody(t *testing.T) {
 	log := zap.NewNop()
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{
-			"default": {
-				URL: "http://localhost",
-			},
-		},
+	backendConfig := &config.ModelBackend{
+		URL: "http://localhost",
 	}
 	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 	req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(""))
@@ -228,12 +153,8 @@ func (errorReader) Read(p []byte) (n int, err error) {
 
 func TestNewOAIProxyHandler_BodyReadError(t *testing.T) {
 	log := zap.NewNop()
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{
-			"default": {
-				URL: "http://localhost",
-			},
-		},
+	backendConfig := &config.ModelBackend{
+		URL: "http://localhost",
 	}
 	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 	req := httptest.NewRequest("POST", "/v1/chat/completions", errorReader{})
@@ -256,11 +177,7 @@ func (errorWriter) WriteHeader(statusCode int) {}
 
 func TestNewModelsHandler_EncoderError(t *testing.T) {
 	log := zap.NewNop()
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{
-			"model-1": {},
-		},
-	}
+	backendConfig := &config.ModelBackend{}
 	handler := NewModelsHandler(backendConfig, log)
 	req := httptest.NewRequest("GET", "/v1/models", nil)
 	rr := errorWriter{}
@@ -275,12 +192,8 @@ func (t *errorTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func TestProxyRequest_ClientDoError(t *testing.T) {
 	log := zap.NewNop()
-	backendConfig := &config.ModelBackendConfig{
-		Models: map[string]config.ModelBackend{
-			"model-1": {
-				URL: "http://localhost",
-			},
-		},
+	backendConfig := &config.ModelBackend{
+		URL: "http://localhost",
 	}
 
 	// Create a custom client with the error-producing transport

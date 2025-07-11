@@ -26,7 +26,7 @@ type ModelList struct {
 }
 
 // NewOAIProxyHandler creates a new http.HandlerFunc that proxies requests to the given backendURL.
-func NewOAIProxyHandler(cfg *config.Config, modelBackendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
+func NewOAIProxyHandler(cfg *config.Config, modelBackendConfig *config.ModelBackend, log *zap.Logger) http.HandlerFunc {
 	tr := &http.Transport{
 		MaxIdleConns:    cfg.Proxy.MaxIdleConns,
 		IdleConnTimeout: cfg.Proxy.IdleConnTimeout,
@@ -45,18 +45,16 @@ func NewOAIProxyHandler(cfg *config.Config, modelBackendConfig *config.ModelBack
 	}
 }
 
-func NewModelsHandler(backendConfig *config.ModelBackendConfig, log *zap.Logger) http.HandlerFunc {
+func NewModelsHandler(backendConfig *config.ModelBackend, log *zap.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		models := make([]Model, 0, len(backendConfig.Models))
-		for modelID, modelInfo := range backendConfig.Models {
-			models = append(models, Model{
-				ID:      modelID,
-				Object:  "model",
-				Created: time.Now().Unix(),
-				OwnedBy: "fxn",
-				FxnID:   modelInfo.FxnID,
-			})
-		}
+		models := make([]Model, 0, 1)
+		models = append(models, Model{
+			ID:      backendConfig.FxnID,
+			Object:  "model",
+			Created: time.Now().Unix(),
+			OwnedBy: "fxn",
+			FxnID:   backendConfig.FxnID,
+		})
 
 		modelList := ModelList{
 			Object: "list",
@@ -96,12 +94,10 @@ func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.Res
 	proxyReq.Header = make(http.Header)
 	copyHeaders(proxyReq.Header, r.Header)
 
-	if modelBackend.Auth != nil {
-		if modelBackend.Auth.APIKey != "" {
-			proxyReq.Header.Set("x-api-key", modelBackend.Auth.APIKey)
-		} else if modelBackend.Auth.BearerToken != "" {
-			proxyReq.Header.Set("Authorization", "Bearer "+modelBackend.Auth.BearerToken)
-		}
+	if modelBackend.APIKey != "" {
+		proxyReq.Header.Set("x-api-key", modelBackend.APIKey)
+	} else if modelBackend.BearerToken != "" {
+		proxyReq.Header.Set("Authorization", "Bearer "+modelBackend.BearerToken)
 	}
 
 	// Send the request

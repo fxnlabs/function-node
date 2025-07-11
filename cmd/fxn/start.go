@@ -23,7 +23,7 @@ import (
 
 func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.EthClient, router contracts.Router, gatewayRegistry registry.Registry, schedulerRegistry registry.Registry, providerRegistry registry.Registry, log *zap.Logger) error {
 	rootLogger := log.Named("node")
-	modelBackendConfig, err := config.LoadModelBackendConfig(filepath.Join(configHomePath, "model_backend.yaml"))
+	modelBackendConfig, err := config.LoadModelBackend(filepath.Join(configHomePath, "model_backend.yaml"))
 	if err != nil {
 		rootLogger.Fatal("failed to load model_backend config", zap.Error(err))
 	}
