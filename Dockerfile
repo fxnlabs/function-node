@@ -13,4 +13,4 @@ WORKDIR /app
 
 COPY --from=builder /app/fxn .
 
-CMD ["./fxn"]
+CMD ["./fxn start --tui"]
