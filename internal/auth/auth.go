@@ -60,8 +60,12 @@ func (c *NonceCache) Use(nonce string) {
 	c.nonces[nonce] = time.Now()
 }
 
-func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, regs ...registry.Registry) http.Handler {
+func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, bypassAuth bool, regs ...registry.Registry) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if bypassAuth {
+			next.ServeHTTP(w, r)
+			return
+		}
 		address := r.Header.Get("X-Address")
 		if address == "" {
 			log.Warn("missing X-Address header")

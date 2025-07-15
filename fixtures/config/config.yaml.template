@@ -5,6 +5,7 @@ logger:
   verbosity: "info"
 registry:
   routerSmartContractAddress: "0x7C8e239F9A26D7fd081Db72A2A23F4E9CA35E16b"
+  bypassAuth: false
   gateway:
     pollInterval: "1m"
   scheduler:

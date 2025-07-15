@@ -61,4 +61,4 @@ COPY --from=builder /app/cuda/lib ./cuda/lib
 # Set CUDA library path to include our custom library
 ENV LD_LIBRARY_PATH="./cuda/lib:/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
 
-CMD ["./fxn"]
+CMD ["./fxn start"]

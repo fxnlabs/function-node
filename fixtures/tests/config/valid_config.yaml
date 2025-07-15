@@ -5,6 +5,7 @@ logger:
   verbosity: "info"
 registry:
   routerSmartContractAddress: "0x123"
+  bypassAuth: true
   gateway:
     pollInterval: 10s
   provider:

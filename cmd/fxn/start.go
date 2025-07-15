@@ -45,15 +45,15 @@ func startNode(configHomePath string, cfg *config.Config, ethClient ethclient.Et
 	// Assuming AuthMiddleware might need providerRegistry if it performs provider registration checks.
 	// If not, schedulerRegistry might be the correct one for challenges.
 	// Based on existing code, schedulerRegistry is used for /challenge
-	http.Handle("/challenge", metrics.Middleware(auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, schedulerRegistry), "/challenge"))
+	http.Handle("/challenge", metrics.Middleware(auth.AuthMiddleware(challengeHandler, rootLogger, nonceCache, cfg.Registry.BypassAuth, schedulerRegistry), "/challenge"))
 
 	oaiProxyHandler := openai.NewOAIProxyHandler(cfg, modelBackendConfig, rootLogger)
-	http.Handle("/v1/chat/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/chat/completions"))
-	http.Handle("/v1/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/completions"))
-	http.Handle("/v1/embeddings", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/embeddings"))
+	http.Handle("/v1/chat/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, cfg.Registry.BypassAuth, gatewayRegistry, schedulerRegistry), "/v1/chat/completions"))
+	http.Handle("/v1/completions", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, cfg.Registry.BypassAuth, gatewayRegistry, schedulerRegistry), "/v1/completions"))
+	http.Handle("/v1/embeddings", metrics.Middleware(auth.AuthMiddleware(oaiProxyHandler, rootLogger, nonceCache, cfg.Registry.BypassAuth, gatewayRegistry, schedulerRegistry), "/v1/embeddings"))
 
 	modelsHandler := openai.NewModelsHandler(modelBackendConfig, rootLogger)
-	http.Handle("/v1/models", metrics.Middleware(auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, gatewayRegistry, schedulerRegistry), "/v1/models"))
+	http.Handle("/v1/models", metrics.Middleware(auth.AuthMiddleware(modelsHandler, rootLogger, nonceCache, cfg.Registry.BypassAuth, gatewayRegistry, schedulerRegistry), "/v1/models"))
 
 	// Expose Prometheus metrics endpoint
 	http.Handle("/metrics", promhttp.Handler())
