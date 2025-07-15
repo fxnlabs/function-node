@@ -20,6 +20,7 @@ func TestLoadConfig(t *testing.T) {
 		assert.Equal(t, "127.0.0.1", config.Node.ListenAddress)
 		assert.Equal(t, "info", config.Logger.Verbosity)
 		assert.Equal(t, "0x123", config.Registry.RouterSmartContractAddress)
+		assert.True(t, config.Registry.BypassAuth)
 		assert.Equal(t, 10*time.Second, config.Registry.Gateway.PollInterval)
 		assert.Equal(t, 15*time.Second, config.Registry.Provider.PollInterval)
 		assert.Equal(t, "http://localhost:8545", config.RpcProvider)

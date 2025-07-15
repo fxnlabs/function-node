@@ -101,11 +101,19 @@ func TestAuthMiddleware(t *testing.T) {
 		w.Write([]byte("OK"))
 	})
 
-	authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg)
+	authHandler := AuthMiddleware(nextHandler, log, nonceCache, false, mockReg)
+
+	t.Run("bypass auth", func(t *testing.T) {
+		authHandler := AuthMiddleware(nextHandler, log, nonceCache, true, mockReg)
+		req := httptest.NewRequest("POST", "/", strings.NewReader(""))
+		rr := httptest.NewRecorder()
+		authHandler.ServeHTTP(rr, req)
+		assert.Equal(t, http.StatusOK, rr.Code)
+	})
 
 	t.Run("valid request with multiple registries", func(t *testing.T) {
 		mockReg2 := new(mocks.MockRegistry)
-		authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg, mockReg2)
+		authHandler := AuthMiddleware(nextHandler, log, nonceCache, false, mockReg, mockReg2)
 		body := []byte(`{"hello":"world"}`)
 		timestamp := fmt.Sprintf("%d", time.Now().Unix())
 		nonce := fmt.Sprintf("test-nonce-1-%d", time.Now().UnixNano())
@@ -143,7 +151,7 @@ func TestAuthMiddleware(t *testing.T) {
 		mockReg.On("Get", address2).Return(nil, false).Once()
 		mockReg2 := new(mocks.MockRegistry)
 		mockReg2.On("Get", address2).Return(struct{}{}, true).Once()
-		authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg, mockReg2)
+		authHandler := AuthMiddleware(nextHandler, log, nonceCache, false, mockReg, mockReg2)
 
 		body := []byte(`{"hello":"world"}`)
 		timestamp := fmt.Sprintf("%d", time.Now().Unix())
@@ -218,7 +226,7 @@ func TestAuthMiddleware(t *testing.T) {
 		mockReg.On("Get", unregisteredAddr).Return(nil, false).Once()
 		mockReg2 := new(mocks.MockRegistry)
 		mockReg2.On("Get", unregisteredAddr).Return(nil, false).Once()
-		authHandler := AuthMiddleware(nextHandler, log, nonceCache, mockReg, mockReg2)
+		authHandler := AuthMiddleware(nextHandler, log, nonceCache, false, mockReg, mockReg2)
 
 		req := httptest.NewRequest("POST", "/", strings.NewReader(""))
 		req.Header.Set("X-Address", unregisteredAddr)
