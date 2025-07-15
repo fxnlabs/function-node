@@ -26,6 +26,7 @@ type Config struct {
 	} `yaml:"logger"`
 	Registry struct {
 		RouterSmartContractAddress string `yaml:"routerSmartContractAddress"`
+		BypassAuth                 bool   `yaml:"bypass_auth"`
 		Gateway                    struct {
 			PollInterval time.Duration `yaml:"pollInterval"`
 		} `yaml:"gateway"`
