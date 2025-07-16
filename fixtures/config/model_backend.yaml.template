@@ -2,7 +2,7 @@
 # It allows node operators to configure a specific model and point it to a different URL (backend).
 backendProvider: "custom" # "fxn", "custom", "vllm" or "ollama"
 url: "http://your-backend:8082" # required for "custom"
-fxnId: "2" # required for "fxn"
+fxnId: "2"
 apiKey: "your-api-key" # optional
 bearerToken: "your-bearer-token" # optional
-# modelNameAlias: "huggingface-quantized-model-name" # optional
+modelNameAlias: "huggingface-quantized-model-name"
