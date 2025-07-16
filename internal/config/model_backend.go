@@ -14,6 +14,7 @@ type ModelBackend struct {
 	FxnID           string `yaml:"fxn_id,omitempty"`
 	APIKey          string `yaml:"api_key,omitempty"`
 	BearerToken     string `yaml:"bearer_token,omitempty"`
+	ModelNameAlias  string `yaml:"model_name_alias,omitempty"`
 }
 
 func LoadModelBackend(configPath string) (*ModelBackend, error) {

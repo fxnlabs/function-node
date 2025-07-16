@@ -1,3 +1,4 @@
 backend_provider: "fxn"
 fxn_id: "default"
 api_key: "default-api-key"
+model_name_alias: "aliased-model"

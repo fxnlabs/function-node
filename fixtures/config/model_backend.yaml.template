@@ -5,3 +5,4 @@ url: "http://your-backend:8082" # required for "custom"
 fxn_id: "2" # required for "fxn"
 api_key: "your-api-key" # optional
 bearer_token: "your-bearer-token" # optional
+# model_name_alias: "huggingface-quantized-model-name" # optional

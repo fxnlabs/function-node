@@ -76,6 +76,15 @@ func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.Res
 	}
 	r.Body.Close()
 
+	// Handle model name aliasing
+	if modelBackend.ModelNameAlias != "" {
+		var requestData map[string]interface{}
+		if err := json.Unmarshal(body, &requestData); err == nil {
+			requestData["model"] = modelBackend.ModelNameAlias
+			body, _ = json.Marshal(requestData)
+		}
+	}
+
 	// Create a new request to the backend URL
 	target, err := url.Parse(modelBackend.URL)
 	if err != nil {

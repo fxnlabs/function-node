@@ -19,6 +19,7 @@ func TestLoadModelBackendConfig(t *testing.T) {
 		assert.Equal(t, "fxn", config.BackendProvider)
 		assert.Equal(t, "default", config.FxnID)
 		assert.Equal(t, "default-api-key", config.APIKey)
+		assert.Equal(t, "aliased-model", config.ModelNameAlias)
 	})
 
 	t.Run("non-existent file", func(t *testing.T) {
