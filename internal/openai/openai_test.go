@@ -49,7 +49,7 @@ func TestNewOAIProxyHandler(t *testing.T) {
 		// Check that the body was proxied
 		body, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
-		assert.Equal(t, `{"model":"aliased-model-name"}`, string(body))
+		assert.Equal(t, `{"model": "aliased-model-name"}`, string(body))
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("proxied response"))
@@ -65,7 +65,7 @@ func TestNewOAIProxyHandler(t *testing.T) {
 	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 
 	t.Run("successful proxy", func(t *testing.T) {
-		reqBody := `{"model": "model-1"}`
+		reqBody := `{"model": "model-1"}` // Note the space after the colon
 		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
