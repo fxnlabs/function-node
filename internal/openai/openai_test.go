@@ -65,7 +65,7 @@ func TestNewOAIProxyHandler(t *testing.T) {
 	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)
 
 	t.Run("successful proxy", func(t *testing.T) {
-		reqBody := `{"model": "model-1"}` // Note the space after the colon
+		reqBody := `{"model": "model-1"}`
 		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(reqBody))
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
