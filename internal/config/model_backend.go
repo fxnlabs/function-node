@@ -9,12 +9,12 @@ import (
 )
 
 type ModelBackend struct {
-	BackendProvider string `yaml:"backend_provider"`
+	BackendProvider string `yaml:"backendProvider"`
 	URL             string `yaml:"url,omitempty"`
-	FxnID           string `yaml:"fxn_id,omitempty"`
-	APIKey          string `yaml:"api_key,omitempty"`
-	BearerToken     string `yaml:"bearer_token,omitempty"`
-	ModelNameAlias  string `yaml:"model_name_alias,omitempty"`
+	FxnID           string `yaml:"fxnId,omitempty"`
+	APIKey          string `yaml:"apiKey,omitempty"`
+	BearerToken     string `yaml:"bearerToken,omitempty"`
+	ModelNameAlias  string `yaml:"modelNameAlias,omitempty"`
 }
 
 func LoadModelBackend(configPath string) (*ModelBackend, error) {
