@@ -82,8 +82,8 @@ func AuthMiddleware(next http.Handler, log *zap.Logger, nonceCache *NonceCache, 
 		}
 
 		if !authenticated {
-			log.Warn("node not registered", zap.String("address", address))
-			http.Error(w, "node not registered", http.StatusUnauthorized)
+			log.Warn("caller not authorized", zap.String("address", address))
+			http.Error(w, "caller not authorized", http.StatusUnauthorized)
 			return
 		}
 
