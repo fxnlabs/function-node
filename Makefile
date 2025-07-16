@@ -112,7 +112,6 @@ clean:
 	rm -f fxn
 	$(MAKE) -C cuda clean 2>/dev/null || true
 	$(MAKE) -C metal clean 2>/dev/null || true
-	go clean -cache
 
 # Install dependencies
 deps:
