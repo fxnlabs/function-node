@@ -9,7 +9,7 @@ cuda: cuda-compile
 	@echo "Building with CUDA support..."
 	CGO_ENABLED=1 \
 	CGO_CFLAGS="-I/usr/local/cuda/include -I./cuda" \
-	CGO_LDFLAGS="-L/usr/local/cuda/lib64 -L./cuda -lmatmul_cuda -lcuda -lcudart -lcublas -lstdc++" \
+	CGO_LDFLAGS="-L/usr/local/cuda/lib64 -L./cuda/lib -lmatmul_cuda -lcuda -lcudart -lcublas -lstdc++" \
 	go build -tags cuda -o fxn github.com/fxnlabs/function-node/cmd/fxn
 
 # Compile CUDA sources
