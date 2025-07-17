@@ -49,7 +49,7 @@ func TestNewOAIProxyHandler(t *testing.T) {
 		// Check that the body was proxied
 		body, err := io.ReadAll(r.Body)
 		require.NoError(t, err)
-		assert.Equal(t, `{"model": "model-1"}`, string(body))
+		assert.Equal(t, `{"model": "aliased-model-name"}`, string(body))
 
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("proxied response"))
@@ -57,8 +57,9 @@ func TestNewOAIProxyHandler(t *testing.T) {
 	defer backendServer.Close()
 
 	backendConfig := &config.ModelBackend{
-		URL:         backendServer.URL,
-		BearerToken: "test-token",
+		URL:            backendServer.URL,
+		BearerToken:    "test-token",
+		ModelNameAlias: "aliased-model-name",
 	}
 
 	handler := NewOAIProxyHandler(&config.Config{}, backendConfig, log)

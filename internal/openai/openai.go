@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/fxnlabs/function-node/internal/config"
@@ -75,6 +76,14 @@ func proxyRequest(r *http.Request, modelBackend *config.ModelBackend, w http.Res
 		return
 	}
 	r.Body.Close()
+
+	// Handle model name aliasing
+	if modelBackend.ModelNameAlias != "" {
+		// Use regex for a more efficient replacement than unmarshalling the whole body
+		re := regexp.MustCompile(`("model"\s*:\s*)"[^"]*"`)
+		replacement := []byte(`$1"` + modelBackend.ModelNameAlias + `"`)
+		body = re.ReplaceAll(body, replacement)
+	}
 
 	// Create a new request to the backend URL
 	target, err := url.Parse(modelBackend.URL)
